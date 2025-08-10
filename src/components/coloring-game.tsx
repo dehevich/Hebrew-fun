@@ -209,7 +209,7 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
     ctx.save();
     ctx.strokeStyle = '#cccccc';
     ctx.lineWidth = 2;
-    ctx.fillStyle = '#f0f0f0';
+    ctx.fillStyle = 'transparent';
 
     sheet.template.elements.forEach(element => {
       ctx.save();
@@ -223,43 +223,23 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
       switch (element.type) {
         case 'rect':
           const [x, y, w, h] = element.content.split(' ').map(Number);
-          if (element.fill !== false) {
-            ctx.fillStyle = element.color;
-            ctx.fillRect(x, y, w, h);
-          } else {
-            ctx.strokeRect(x, y, w, h);
-          }
+          ctx.strokeRect(x, y, w, h);
           break;
         case 'circle':
           const [cx, cy, r] = element.content.split(' ').map(Number);
           ctx.beginPath();
           ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-          if (element.fill !== false) {
-            ctx.fillStyle = element.color;
-            ctx.fill();
-          } else {
-            ctx.stroke();
-          }
+          ctx.stroke();
           break;
         case 'ellipse':
           const [ex, ey, rx, ry] = element.content.split(' ').map(Number);
           ctx.beginPath();
           ctx.ellipse(ex, ey, rx, ry, 0, 0, 2 * Math.PI);
-          if (element.fill !== false) {
-            ctx.fillStyle = element.color;
-            ctx.fill();
-          } else {
-            ctx.stroke();
-          }
+          ctx.stroke();
           break;
         case 'path':
           const path = new Path2D(element.content);
-          if (element.fill !== false) {
-            ctx.fillStyle = element.color;
-            ctx.fill(path);
-          } else {
-            ctx.stroke(path);
-          }
+          ctx.stroke(path);
           break;
       }
       
@@ -268,6 +248,8 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -290,6 +272,8 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
+    e.preventDefault();
+    e.stopPropagation();
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -305,7 +289,11 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
     ctx.stroke();
   };
 
-  const stopDrawing = () => {
+  const stopDrawing = (e?: React.MouseEvent<HTMLCanvasElement>) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setIsDrawing(false);
   };
 
@@ -388,11 +376,34 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
             ref={canvasRef}
             width={400}
             height={500}
-            className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair bg-white"
+            className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair bg-white touch-none"
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              const touch = e.touches[0];
+              const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+              });
+              canvasRef.current?.dispatchEvent(mouseEvent);
+            }}
+            onTouchMove={(e) => {
+              e.preventDefault();
+              const touch = e.touches[0];
+              const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+              });
+              canvasRef.current?.dispatchEvent(mouseEvent);
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              const mouseEvent = new MouseEvent('mouseup', {});
+              canvasRef.current?.dispatchEvent(mouseEvent);
+            }}
           />
         </Card>
 

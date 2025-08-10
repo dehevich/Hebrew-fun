@@ -14,21 +14,35 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "Hebrew Learning for Kids",
+  description: "Interactive Hebrew learning app for children with games, tracing, and fun activities",
+  keywords: ["Hebrew", "learning", "kids", "children", "education", "games", "language"],
+  authors: [{ name: "Hebrew Learning Team" }],
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "Hebrew Learning for Kids",
+    description: "Interactive Hebrew learning app for children with games, tracing, and fun activities",
+    url: "https://hebrew-learning.app",
+    siteName: "Hebrew Learning",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "Hebrew Learning for Kids",
+    description: "Interactive Hebrew learning app for children with games, tracing, and fun activities",
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': 'Hebrew Learning',
+    'format-detection': 'telephone=no',
   },
 };
 

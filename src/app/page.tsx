@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ColoringRedemption } from '@/components/coloring-redemption';
+import { useMobileBackButton } from '@/hooks/use-mobile-back-button';
+import { useTouchOptimization, preventBodyScroll } from '@/hooks/use-touch-optimization';
 import { Star, Trophy, BookOpen, Home, User, Settings, ArrowLeft, RotateCcw, Plus, Edit, Palette, Volume2 } from 'lucide-react';
 
 interface Profile {
@@ -32,7 +34,7 @@ interface Profile {
 }
 
 const animalIcons = [
-  '🦁', '🐘', '🦒', '🐼', '🦊', '🐨', '🐯', '🦁', 
+  '🦁', '🐘', '🦒', '🐼', '🦊', '🐨', '🐯', '🐮', 
   '🐸', '🐰', '🦄', '🐷', '🐶', '🐱', '🐭', '🦔'
 ];
 
@@ -104,6 +106,9 @@ export default function HebrewLearningApp() {
   const [activeTab, setActiveTab] = useState('home');
   const [currentGame, setCurrentGame] = useState<string | null>(null);
 
+  // Refs for touch optimization
+  const appRef = useRef<HTMLDivElement>(null);
+
   // Game states
   const [gameLevel, setGameLevel] = useState(1);
   const [gameProgress, setGameProgress] = useState(0);
@@ -115,10 +120,47 @@ export default function HebrewLearningApp() {
   const [tracingComplete, setTracingComplete] = useState(false);
 
   // Letter Catch game states
-  const [fallingLetters, setFallingLetters] = useState<Array<{letter: string, id: number, x: number, y: number}>>([]);
+  const [fallingLetters, setFallingLetters] = useState<Array<{letter: string, id: number, x: number, y: number, isCaught?: boolean, isWrong?: boolean}>>([]);
   const [catchScore, setCatchScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(30);
   const [gameActive, setGameActive] = useState(false);
+  const [feedbackAnimation, setFeedbackAnimation] = useState<{type: 'good' | 'bad', letter: string, id: number} | null>(null);
+
+  // Numbers game states
+  const [numbersOptions, setNumbersOptions] = useState<number[]>([]);
+
+  // Word puzzle game states
+  const [puzzlePieces, setPuzzlePieces] = useState<Array<{letter: string, id: number, position: string}>>([]);
+  const [builtWord, setBuiltWord] = useState<string[]>([]);
+  const [selectedPiece, setSelectedPiece] = useState<number | null>(null);
+
+  // Prevent body scroll when game is active
+  useEffect(() => {
+    preventBodyScroll(!!currentGame);
+    return () => preventBodyScroll(false);
+  }, [currentGame]);
+
+  // Hardware back button support
+  useMobileBackButton(() => {
+    if (currentGame) {
+      setCurrentGame(null);
+    } else if (showProfileSelection) {
+      setShowProfileSelection(false);
+    } else if (showProfileCreation && profiles.length > 0) {
+      setShowProfileCreation(false);
+    }
+  }, !!currentGame || showProfileSelection || showProfileCreation);
+
+  // Touch optimization for swipe gestures
+  useTouchOptimization(appRef, {
+    onSwipeRight: () => {
+      if (currentGame) {
+        setCurrentGame(null);
+      }
+    },
+    onSwipeLeft: () => {
+      // Could be used for next question or other navigation
+    }
+  }, !!currentGame);
 
   // Initialize profiles from localStorage
   useEffect(() => {
@@ -133,24 +175,12 @@ export default function HebrewLearningApp() {
     if (savedCurrentProfile) {
       setCurrentProfile(JSON.parse(savedCurrentProfile));
     } else {
-      // Show profile creation if no current profile
+      // Always show profile creation if no current profile
       setShowProfileCreation(true);
     }
   }, []);
 
   // Letter Catch game effects
-  useEffect(() => {
-    if (gameActive && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      setGameActive(false);
-      if (catchScore >= 5) {
-        handleCorrectAnswer();
-      }
-    }
-  }, [gameActive, timeLeft]);
-
   useEffect(() => {
     if (gameActive) {
       const interval = setInterval(() => {
@@ -177,6 +207,49 @@ export default function HebrewLearningApp() {
 
     return () => clearInterval(moveInterval);
   }, []);
+
+  // Feedback animation effect
+  useEffect(() => {
+    if (feedbackAnimation) {
+      const timer = setTimeout(() => {
+        setFeedbackAnimation(null);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedbackAnimation]);
+
+  // Initialize numbers options when question changes
+  useEffect(() => {
+    if (currentGame === 'numbers-game') {
+      const currentNumber = hebrewNumbers[currentQuestion % hebrewNumbers.length];
+      const options = [currentNumber.number];
+      
+      // Add 3 random wrong options
+      while (options.length < 4) {
+        const randomNum = Math.floor(Math.random() * 100) + 1;
+        if (!options.includes(randomNum)) {
+          options.push(randomNum);
+        }
+      }
+      
+      // Shuffle options once and store
+      setNumbersOptions([...options].sort(() => Math.random() - 0.5));
+    }
+  }, [currentQuestion, currentGame]);
+
+  // Initialize word puzzle pieces when question changes
+  useEffect(() => {
+    if (currentGame === 'word-puzzle') {
+      const currentWord = hebrewWords[currentQuestion % hebrewWords.length];
+      setPuzzlePieces(currentWord.letters.map((letter, index) => ({
+        letter,
+        id: index,
+        position: Math.random() > 0.5 ? 'top' : 'bottom'
+      })));
+      setBuiltWord([]);
+      setSelectedPiece(null);
+    }
+  }, [currentQuestion, currentGame]);
 
   // Save profiles to localStorage when they change
   useEffect(() => {
@@ -273,9 +346,31 @@ export default function HebrewLearningApp() {
   };
 
   const playHebrewSound = (text: string) => {
-    // Placeholder for Hebrew pronunciation
-    // In a real implementation, this would use a text-to-speech API
-    console.log(`Playing Hebrew sound for: ${text}`);
+    // Cancel any ongoing speech
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    
+    // Use Web Speech API for Hebrew pronunciation
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'he-IL';
+      utterance.rate = 0.8;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      // Try to find a Hebrew voice
+      const voices = window.speechSynthesis.getVoices();
+      const hebrewVoice = voices.find(voice => voice.lang.startsWith('he'));
+      if (hebrewVoice) {
+        utterance.voice = hebrewVoice;
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    } else {
+      // Fallback: just log to console
+      console.log(`Playing Hebrew sound for: ${text}`);
+    }
   };
 
   const startGame = (gameKey: string) => {
@@ -311,9 +406,9 @@ export default function HebrewLearningApp() {
 
   const renderProfileCreation = () => {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100 p-4 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
+      <div className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100 safe-area-inset flex items-center justify-center">
+        <Card className="w-full max-w-md mobile-spacious">
+          <CardHeader className="text-center safe-area-top">
             <CardTitle className="text-2xl font-bold text-purple-600">Create New Profile 👶</CardTitle>
             <p className="text-gray-600">Let's set up your learning adventure!</p>
           </CardHeader>
@@ -328,8 +423,9 @@ export default function HebrewLearningApp() {
                 value={newProfileName}
                 onChange={(e) => setNewProfileName(e.target.value)}
                 placeholder="Enter your name"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-target"
                 maxLength={20}
+                style={{ fontSize: '16px' }}
               />
             </div>
 
@@ -338,27 +434,27 @@ export default function HebrewLearningApp() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 How old are you?
               </label>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center gap-4">
                 <HapticButton
                   variant="outline"
                   onClick={() => setNewProfileAge(Math.max(4, newProfileAge - 1))}
                   disabled={newProfileAge <= 4}
-                  className="w-12 h-12 rounded-full"
+                  className="w-14 h-14 rounded-full touch-target"
                   hapticType="light"
                 >
-                  -
+                  <span className="text-xl">-</span>
                 </HapticButton>
-                <span className="text-2xl font-bold text-purple-600 min-w-[60px] text-center">
+                <span className="text-3xl font-bold text-purple-600 min-w-[70px] text-center">
                   {newProfileAge}
                 </span>
                 <HapticButton
                   variant="outline"
                   onClick={() => setNewProfileAge(Math.min(10, newProfileAge + 1))}
                   disabled={newProfileAge >= 10}
-                  className="w-12 h-12 rounded-full"
+                  className="w-14 h-14 rounded-full touch-target"
                   hapticType="light"
                 >
-                  +
+                  <span className="text-xl">+</span>
                 </HapticButton>
               </div>
               <p className="text-sm text-gray-500 mt-2 text-center">
@@ -378,7 +474,7 @@ export default function HebrewLearningApp() {
                   <HapticButton
                     key={index}
                     variant={selectedIcon === icon ? "default" : "outline"}
-                    className="w-16 h-16 text-2xl rounded-lg"
+                    className="w-16 h-16 text-2xl rounded-lg touch-target"
                     onClick={() => setSelectedIcon(icon)}
                     hapticType="light"
                   >
@@ -389,11 +485,11 @@ export default function HebrewLearningApp() {
             </div>
 
             {/* Action Buttons */}
-            <div className="space-y-3">
+            <div className="space-y-3 safe-area-bottom">
               <HapticButton
                 onClick={createProfile}
                 disabled={!newProfileName.trim()}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3"
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 touch-target"
                 hapticType="success"
               >
                 Let's Start Learning! 🚀
@@ -405,7 +501,7 @@ export default function HebrewLearningApp() {
                     setShowProfileCreation(false);
                     setShowProfileSelection(true);
                   }}
-                  className="w-full"
+                  className="w-full py-3 touch-target"
                   hapticType="light"
                 >
                   Choose Existing Profile
@@ -420,19 +516,19 @@ export default function HebrewLearningApp() {
 
   const renderProfileSelection = () => {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100 p-4 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
+      <div className="min-h-screen bg-gradient-to-b from-purple-100 to-pink-100 safe-area-inset flex items-center justify-center">
+        <Card className="w-full max-w-md mobile-spacious">
+          <CardHeader className="text-center safe-area-top">
             <CardTitle className="text-2xl font-bold text-purple-600">Who's Learning Today? 👋</CardTitle>
             <p className="text-gray-600">Choose your profile to continue</p>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Profile List */}
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-96 overflow-y-auto smooth-scroll hide-scrollbar">
               {profiles.map((profile) => (
                 <Card
                   key={profile.id}
-                  className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-lg touch-target ${
                     currentProfile?.id === profile.id 
                       ? 'ring-2 ring-purple-500 bg-purple-50' 
                       : 'hover:bg-gray-50'
@@ -461,13 +557,13 @@ export default function HebrewLearningApp() {
             </div>
 
             {/* Action Buttons */}
-            <div className="space-y-3 pt-4">
+            <div className="space-y-3 pt-4 safe-area-bottom">
               <HapticButton
                 onClick={() => {
                   setShowProfileSelection(false);
                   setShowProfileCreation(true);
                 }}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3"
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 touch-target"
                 hapticType="success"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -476,7 +572,7 @@ export default function HebrewLearningApp() {
               <HapticButton
                 variant="outline"
                 onClick={() => setShowProfileSelection(false)}
-                className="w-full"
+                className="w-full py-3 touch-target"
                 hapticType="light"
               >
                 Cancel
@@ -551,75 +647,77 @@ export default function HebrewLearningApp() {
     ];
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 p-4">
+      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 safe-area-inset">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="text-4xl">{currentProfile.icon}</div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Welcome back, {currentProfile.name}!</h1>
-              <p className="text-gray-600">Level {currentProfile.level} • {currentProfile.points} points</p>
+        <div className="safe-area-top p-4">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="text-4xl">{currentProfile.icon}</div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">Welcome back, {currentProfile.name}!</h1>
+                <p className="text-gray-600">Level {currentProfile.level} • {currentProfile.points} points</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <HapticButton
+                variant="outline"
+                onClick={() => setShowProfileSelection(true)}
+                className="p-3 touch-target"
+                hapticType="light"
+              >
+                <User className="w-5 h-5" />
+              </HapticButton>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <HapticButton
-              variant="outline"
-              onClick={() => setShowProfileSelection(true)}
-              className="p-2"
-              hapticType="light"
-            >
-              <User className="w-5 h-5" />
-            </HapticButton>
-          </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">{currentProfile.points}</div>
-            <div className="text-sm text-gray-600">Points</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{currentProfile.level}</div>
-            <div className="text-sm text-gray-600">Level</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{currentProfile.streak}</div>
-            <div className="text-sm text-gray-600">Day Streak</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">{currentProfile.redeemedSheets.length}</div>
-            <div className="text-sm text-gray-600">Coloring Sheets</div>
-          </Card>
-        </div>
-
-        {/* Games Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {games.map((game) => (
-            <Card 
-              key={game.key} 
-              className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105"
-              onClick={() => startGame(game.key)}
-            >
-              <CardHeader className="text-center">
-                <div className="text-4xl mb-2">{game.icon}</div>
-                <CardTitle className="text-lg">{game.title}</CardTitle>
-                <p className="text-sm text-gray-600">{game.description}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Progress</span>
-                    <span>{Math.floor(game.progress / 2.4)}%</span>
-                  </div>
-                  <Progress value={game.progress / 2.4} className="h-2" />
-                  <div className="text-xs text-gray-500">
-                    Level {Math.floor(game.progress / 8) + 1} of 30
-                  </div>
-                </div>
-              </CardContent>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <Card className="p-4 text-center touch-target">
+              <div className="text-2xl font-bold text-purple-600">{currentProfile.points}</div>
+              <div className="text-sm text-gray-600">Points</div>
             </Card>
-          ))}
+            <Card className="p-4 text-center touch-target">
+              <div className="text-2xl font-bold text-blue-600">{currentProfile.level}</div>
+              <div className="text-sm text-gray-600">Level</div>
+            </Card>
+            <Card className="p-4 text-center touch-target">
+              <div className="text-2xl font-bold text-green-600">{currentProfile.streak}</div>
+              <div className="text-sm text-gray-600">Day Streak</div>
+            </Card>
+            <Card className="p-4 text-center touch-target">
+              <div className="text-2xl font-bold text-orange-600">{currentProfile.redeemedSheets.length}</div>
+              <div className="text-sm text-gray-600">Coloring Sheets</div>
+            </Card>
+          </div>
+
+          {/* Games Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-20">
+            {games.map((game) => (
+              <Card 
+                key={game.key} 
+                className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 touch-target"
+                onClick={() => startGame(game.key)}
+              >
+                <CardHeader className="text-center">
+                  <div className="text-4xl mb-2">{game.icon}</div>
+                  <CardTitle className="text-lg">{game.title}</CardTitle>
+                  <p className="text-sm text-gray-600">{game.description}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Progress</span>
+                      <span>{Math.floor(game.progress / 2.4)}%</span>
+                    </div>
+                    <Progress value={game.progress / 2.4} className="h-2" />
+                    <div className="text-xs text-gray-500">
+                      Level {Math.floor(game.progress / 8) + 1} of 30
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -641,14 +739,14 @@ export default function HebrewLearningApp() {
     const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 p-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 safe-area-inset">
+        <div className="max-w-2xl mx-auto safe-area-all">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 safe-area-top">
             <HapticButton
               variant="outline"
               onClick={() => setCurrentGame(null)}
-              className="p-2"
+              className="p-3 touch-target"
               hapticType="light"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -657,7 +755,7 @@ export default function HebrewLearningApp() {
               <h1 className="text-2xl font-bold text-gray-800">Letter Match</h1>
               <p className="text-gray-600">Level {gameLevel} • Question {currentQuestion + 1}/8</p>
             </div>
-            <div className="w-10" />
+            <div className="w-12" />
           </div>
 
           {/* Letter Display */}
@@ -669,7 +767,7 @@ export default function HebrewLearningApp() {
             <HapticButton
               variant="outline"
               onClick={() => playHebrewSound(currentLetter.sound)}
-              className="mt-4 w-20 h-20 rounded-full mx-auto"
+              className="mt-4 w-20 h-20 rounded-full mx-auto touch-target"
               hapticType="light"
             >
               <Volume2 className="w-10 h-10" />
@@ -689,7 +787,7 @@ export default function HebrewLearningApp() {
                     handleWrongAnswer();
                   }
                 }}
-                className="h-16 text-lg font-semibold"
+                className="h-16 text-lg font-semibold touch-target"
                 hapticType="light"
               >
                 {option}
@@ -698,7 +796,7 @@ export default function HebrewLearningApp() {
           </div>
 
           {/* Progress */}
-          <div className="text-center">
+          <div className="text-center safe-area-bottom">
             <div className="text-sm text-gray-600 mb-2">
               Progress: {gameProgress}/8 questions
             </div>
@@ -714,14 +812,14 @@ export default function HebrewLearningApp() {
     const scrambledLetters = [...currentWord.letters].sort(() => Math.random() - 0.5);
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 p-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 safe-area-inset">
+        <div className="max-w-2xl mx-auto safe-area-all">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 safe-area-top">
             <HapticButton
               variant="outline"
               onClick={() => setCurrentGame(null)}
-              className="p-2"
+              className="p-3 touch-target"
               hapticType="light"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -730,7 +828,7 @@ export default function HebrewLearningApp() {
               <h1 className="text-2xl font-bold text-gray-800">Word Builder</h1>
               <p className="text-gray-600">Level {gameLevel} • Question {currentQuestion + 1}/8</p>
             </div>
-            <div className="w-10" />
+            <div className="w-12" />
           </div>
 
           {/* Word Display */}
@@ -742,7 +840,7 @@ export default function HebrewLearningApp() {
             <HapticButton
               variant="outline"
               onClick={() => playHebrewSound(currentWord.hebrew)}
-              className="w-20 h-20 rounded-full mx-auto mb-6"
+              className="w-20 h-20 rounded-full mx-auto mb-6 touch-target"
               hapticType="light"
             >
               <Volume2 className="w-10 h-10" />
@@ -764,7 +862,7 @@ export default function HebrewLearningApp() {
               <HapticButton
                 key={index}
                 variant="outline"
-                className="h-16 text-2xl font-bold"
+                className="h-16 text-2xl font-bold touch-target"
                 hapticType="light"
               >
                 {letter}
@@ -775,7 +873,7 @@ export default function HebrewLearningApp() {
           {/* Big Check Button */}
           <div className="text-center">
             <HapticButton
-              className="w-full h-16 text-lg font-bold bg-green-500 hover:bg-green-600"
+              className="w-full h-16 text-lg font-bold bg-green-500 hover:bg-green-600 touch-target"
               hapticType="success"
             >
               Check Word ✓
@@ -783,7 +881,7 @@ export default function HebrewLearningApp() {
           </div>
 
           {/* Progress */}
-          <div className="text-center mt-6">
+          <div className="text-center mt-6 safe-area-bottom">
             <div className="text-sm text-gray-600 mb-2">
               Progress: {gameProgress}/8 questions
             </div>
@@ -800,14 +898,14 @@ export default function HebrewLearningApp() {
       .map((card, index) => ({ ...card, id: index + 1 }));
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-50 p-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-50 safe-area-inset">
+        <div className="max-w-4xl mx-auto safe-area-all">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 safe-area-top">
             <HapticButton
               variant="outline"
               onClick={() => setCurrentGame(null)}
-              className="p-2"
+              className="p-3 touch-target"
               hapticType="light"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -816,7 +914,7 @@ export default function HebrewLearningApp() {
               <h1 className="text-2xl font-bold text-gray-800">Memory Game</h1>
               <p className="text-gray-600">Level {gameLevel} • Question {currentQuestion + 1}/8</p>
             </div>
-            <div className="w-10" />
+            <div className="w-12" />
           </div>
 
           {/* Game Board */}
@@ -824,7 +922,7 @@ export default function HebrewLearningApp() {
             {gameCards.map((card) => (
               <Card 
                 key={card.id} 
-                className="h-32 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105"
+                className="h-32 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 touch-target"
               >
                 <CardContent className="p-4 h-full flex flex-col items-center justify-center">
                   <div className="text-4xl mb-2">{card.emoji}</div>
@@ -848,18 +946,6 @@ export default function HebrewLearningApp() {
 
   const renderNumbersGame = () => {
     const currentNumber = hebrewNumbers[currentQuestion % hebrewNumbers.length];
-    const options = [currentNumber.number];
-    
-    // Add 3 random wrong options
-    while (options.length < 4) {
-      const randomNum = Math.floor(Math.random() * 100) + 1;
-      if (!options.includes(randomNum)) {
-        options.push(randomNum);
-      }
-    }
-    
-    // Shuffle options
-    const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-red-50 to-pink-50 p-4">
@@ -899,7 +985,7 @@ export default function HebrewLearningApp() {
 
           {/* Answer Options */}
           <div className="grid grid-cols-2 gap-4 mb-8">
-            {shuffledOptions.map((option, index) => (
+            {numbersOptions.map((option, index) => (
               <HapticButton
                 key={index}
                 variant="outline"
@@ -934,6 +1020,8 @@ export default function HebrewLearningApp() {
     const currentLetter = hebrewAlphabet[currentQuestion % hebrewAlphabet.length];
 
     const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
       const canvas = tracingCanvasRef.current;
       if (!canvas) return;
       
@@ -945,12 +1033,17 @@ export default function HebrewLearningApp() {
       if (ctx) {
         ctx.beginPath();
         ctx.moveTo(x, y);
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#4f46e5';
         setIsDrawing(true);
       }
     };
 
     const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
       if (!isDrawing) return;
+      e.preventDefault();
+      e.stopPropagation();
       
       const canvas = tracingCanvasRef.current;
       if (!canvas) return;
@@ -966,7 +1059,11 @@ export default function HebrewLearningApp() {
       }
     };
 
-    const stopDrawing = () => {
+    const stopDrawing = (e?: React.MouseEvent<HTMLCanvasElement>) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       setIsDrawing(false);
       setTracingComplete(true);
     };
@@ -1031,11 +1128,34 @@ export default function HebrewLearningApp() {
               ref={tracingCanvasRef}
               width={400}
               height={200}
-              className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-crosshair"
+              className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-crosshair touch-none"
               onMouseDown={startDrawing}
               onMouseMove={draw}
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                  clientX: touch.clientX,
+                  clientY: touch.clientY
+                });
+                tracingCanvasRef.current?.dispatchEvent(mouseEvent);
+              }}
+              onTouchMove={(e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                  clientX: touch.clientX,
+                  clientY: touch.clientY
+                });
+                tracingCanvasRef.current?.dispatchEvent(mouseEvent);
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup', {});
+                tracingCanvasRef.current?.dispatchEvent(mouseEvent);
+              }}
             />
           </Card>
 
@@ -1080,13 +1200,24 @@ export default function HebrewLearningApp() {
       if (letter === currentLetter.letter) {
         setCatchScore(prev => prev + 1);
         setFallingLetters(prev => prev.filter(l => l.letter !== letter));
+        setFeedbackAnimation({ type: 'good', letter, id: Date.now() });
+        
+        if (catchScore >= 4) { // Changed from 5 to 4 since we increment after
+          setTimeout(() => {
+            handleCorrectAnswer();
+            setCatchScore(0);
+            setFallingLetters([]);
+            setGameActive(false);
+          }, 1000);
+        }
+      } else {
+        setFeedbackAnimation({ type: 'bad', letter, id: Date.now() });
       }
     };
 
     const startGame = () => {
       setGameActive(true);
       setCatchScore(0);
-      setTimeLeft(30);
       setFallingLetters([]);
     };
 
@@ -1114,7 +1245,7 @@ export default function HebrewLearningApp() {
           <Card className="mb-6 p-6 text-center">
             <div className="text-6xl font-bold text-cyan-600 mb-4">{currentLetter.letter}</div>
             <div className="text-lg text-gray-600 mb-4">Catch this letter!</div>
-            <div className="text-sm text-gray-500">Score: {catchScore}/5 • Time: {timeLeft}s</div>
+            <div className="text-sm text-gray-500">Score: {catchScore}/5</div>
             
             {/* Big Sound Button */}
             <HapticButton
@@ -1127,6 +1258,17 @@ export default function HebrewLearningApp() {
             </HapticButton>
           </Card>
 
+          {/* Feedback Animation */}
+          {feedbackAnimation && (
+            <div className={`fixed inset-0 flex items-center justify-center pointer-events-none z-50 ${
+              feedbackAnimation.type === 'good' ? 'text-green-500' : 'text-red-500'
+            }`}>
+              <div className="text-8xl font-bold animate-bounce">
+                {feedbackAnimation.type === 'good' ? '✓' : '✗'}
+              </div>
+            </div>
+          )}
+
           {/* Game Area */}
           <Card className="mb-6 p-4 h-64 relative overflow-hidden bg-blue-100">
             {fallingLetters.map((letter) => (
@@ -1134,7 +1276,7 @@ export default function HebrewLearningApp() {
                 key={letter.id}
                 variant="outline"
                 onClick={() => catchLetter(letter.letter)}
-                className="absolute text-2xl font-bold w-12 h-12 rounded-full"
+                className="absolute text-2xl font-bold w-12 h-12 rounded-full transition-all duration-200 hover:scale-110"
                 style={{ left: `${letter.x}%`, top: `${letter.y}%` }}
                 hapticType="light"
               >
@@ -1174,11 +1316,57 @@ export default function HebrewLearningApp() {
 
   const renderWordPuzzleGame = () => {
     const currentWord = hebrewWords[currentQuestion % hebrewWords.length];
-    const puzzlePieces = currentWord.letters.map((letter, index) => ({
-      letter,
-      id: index,
-      position: Math.random() > 0.5 ? 'top' : 'bottom'
-    }));
+
+    const handlePieceClick = (pieceId: number) => {
+      const piece = puzzlePieces.find(p => p.id === pieceId);
+      if (!piece) return;
+
+      if (selectedPiece === null) {
+        // Select piece
+        setSelectedPiece(pieceId);
+      } else if (selectedPiece === pieceId) {
+        // Deselect piece
+        setSelectedPiece(null);
+      } else {
+        // Swap pieces
+        const newPieces = [...puzzlePieces];
+        const selectedIndex = newPieces.findIndex(p => p.id === selectedPiece);
+        const clickedIndex = newPieces.findIndex(p => p.id === pieceId);
+        
+        [newPieces[selectedIndex], newPieces[clickedIndex]] = 
+        [newPieces[clickedIndex], newPieces[selectedIndex]];
+        
+        setPuzzlePieces(newPieces);
+        setSelectedPiece(null);
+      }
+    };
+
+    const checkWord = () => {
+      const constructedWord = puzzlePieces.map(p => p.letter).join('');
+      if (constructedWord === currentWord.hebrew) {
+        handleCorrectAnswer();
+        setBuiltWord([]);
+      } else {
+        // Wrong answer - shake animation
+        const wordBuilder = document.querySelector('.word-builder');
+        if (wordBuilder) {
+          wordBuilder.classList.add('animate-pulse');
+          setTimeout(() => {
+            wordBuilder.classList.remove('animate-pulse');
+          }, 1000);
+        }
+      }
+    };
+
+    const resetPuzzle = () => {
+      setPuzzlePieces(currentWord.letters.map((letter, index) => ({
+        letter,
+        id: index,
+        position: Math.random() > 0.5 ? 'top' : 'bottom'
+      })));
+      setBuiltWord([]);
+      setSelectedPiece(null);
+    };
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 p-4">
@@ -1218,38 +1406,51 @@ export default function HebrewLearningApp() {
 
           {/* Puzzle Area */}
           <Card className="mb-6 p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h3 className="text-center font-semibold">Letters</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {puzzlePieces.map((piece) => (
-                    <HapticButton
-                      key={piece.id}
-                      variant="outline"
-                      className="h-16 text-2xl font-bold"
-                      hapticType="light"
-                    >
-                      {piece.letter}
-                    </HapticButton>
-                  ))}
-                </div>
+            {/* Word Builder - Horizontal Layout */}
+            <div className="mb-6">
+              <h3 className="text-center font-semibold mb-3">Build the Word</h3>
+              <div className="word-builder flex justify-center gap-2 flex-wrap">
+                {puzzlePieces.map((piece) => (
+                  <HapticButton
+                    key={piece.id}
+                    variant={selectedPiece === piece.id ? "default" : "outline"}
+                    onClick={() => handlePieceClick(piece.id)}
+                    className={`h-16 w-16 text-2xl font-bold transition-all duration-200 ${
+                      selectedPiece === piece.id ? 'ring-2 ring-purple-500 scale-110' : 'hover:scale-105'
+                    }`}
+                    hapticType="light"
+                  >
+                    {piece.letter}
+                  </HapticButton>
+                ))}
               </div>
-              <div className="space-y-2">
-                <h3 className="text-center font-semibold">Word Builder</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {currentWord.letters.map((_, index) => (
-                    <div key={index} className="h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                      {/* Puzzle pieces will be placed here */}
-                    </div>
-                  ))}
+            </div>
+
+            {/* Preview Area */}
+            <div className="text-center">
+              <h3 className="text-center font-semibold mb-3">Your Word</h3>
+              <div className="bg-gray-50 rounded-lg p-4 min-h-[60px] flex items-center justify-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {puzzlePieces.map(p => p.letter).join('') || 'Build the word above'}
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Big Check Button */}
-          <div className="text-center">
+          {/* Action Buttons */}
+          <div className="space-y-4">
             <HapticButton
+              variant="outline"
+              onClick={resetPuzzle}
+              className="w-full h-12"
+              hapticType="light"
+            >
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Reset Puzzle
+            </HapticButton>
+            
+            <HapticButton
+              onClick={checkWord}
               className="w-full h-16 text-lg font-bold bg-purple-500 hover:bg-purple-600"
               hapticType="success"
             >
@@ -1288,44 +1489,94 @@ export default function HebrewLearningApp() {
 
   // Main render logic
   if (showProfileCreation) {
-    return renderProfileCreation();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderProfileCreation()}
+      </div>
+    );
   }
 
   if (showProfileSelection) {
-    return renderProfileSelection();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderProfileSelection()}
+      </div>
+    );
+  }
+
+  // Safety check: if no current profile, show profile creation
+  if (!currentProfile) {
+    setShowProfileCreation(true);
+    return null;
   }
 
   if (currentGame === 'letter-match') {
-    return renderLetterMatchGame();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderLetterMatchGame()}
+      </div>
+    );
   }
 
   if (currentGame === 'word-builder') {
-    return renderWordBuilderGame();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderWordBuilderGame()}
+      </div>
+    );
   }
 
   if (currentGame === 'memory-game') {
-    return renderMemoryGame();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderMemoryGame()}
+      </div>
+    );
   }
 
   if (currentGame === 'letter-tracing') {
-    return renderLetterTracingGame();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderLetterTracingGame()}
+      </div>
+    );
   }
 
   if (currentGame === 'letter-catch') {
-    return renderLetterCatchGame();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderLetterCatchGame()}
+      </div>
+    );
   }
 
   if (currentGame === 'word-puzzle') {
-    return renderWordPuzzleGame();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderWordPuzzleGame()}
+      </div>
+    );
   }
 
   if (currentGame === 'numbers-game') {
-    return renderNumbersGame();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderNumbersGame()}
+      </div>
+    );
   }
 
   if (currentGame === 'coloring-store') {
-    return renderColoringStore();
+    return (
+      <div ref={appRef} className="min-h-screen bg-background">
+        {renderColoringStore()}
+      </div>
+    );
   }
 
-  return renderHomeScreen();
+  return (
+    <div ref={appRef} className="min-h-screen bg-background">
+      {renderHomeScreen()}
+    </div>
+  );
 }
