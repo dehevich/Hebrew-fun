@@ -15,8 +15,6 @@ interface ColoringSheet {
   image: string;
   description: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  unlocked: boolean;
-  downloaded: boolean;
 }
 
 interface ColoringRedemptionProps {
@@ -37,8 +35,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🏎️',
     description: 'Fast and furious racing car',
     difficulty: 'easy',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'car-2',
@@ -48,8 +44,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🚛',
     description: 'Big and powerful monster truck',
     difficulty: 'medium',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'car-3',
@@ -59,8 +53,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🚗',
     description: 'Sleek and shiny sports car',
     difficulty: 'hard',
-    unlocked: false,
-    downloaded: false
   },
   
   // Animals
@@ -72,8 +64,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🦁',
     description: 'Friendly lion with a big mane',
     difficulty: 'easy',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'animal-2',
@@ -83,8 +73,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🐘',
     description: 'Gentle giant with big ears',
     difficulty: 'medium',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'animal-3',
@@ -94,8 +82,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🐵',
     description: 'Swinging from tree to tree',
     difficulty: 'hard',
-    unlocked: false,
-    downloaded: false
   },
   
   // Flowers
@@ -107,8 +93,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🌻',
     description: 'Bright and cheerful sunflower',
     difficulty: 'easy',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'flower-2',
@@ -118,8 +102,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🌹',
     description: 'Beautiful red roses',
     difficulty: 'medium',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'flower-3',
@@ -129,8 +111,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🌷',
     description: 'Colorful tulip garden',
     difficulty: 'hard',
-    unlocked: false,
-    downloaded: false
   },
   
   // Space
@@ -142,8 +122,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🚀',
     description: 'Blast off to the stars',
     difficulty: 'medium',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'space-2',
@@ -153,8 +131,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '👨‍🚀',
     description: 'Floating in zero gravity',
     difficulty: 'hard',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'space-3',
@@ -164,8 +140,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🪐',
     description: 'Discover new worlds',
     difficulty: 'hard',
-    unlocked: false,
-    downloaded: false
   },
   
   // Airplanes
@@ -177,8 +151,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '✈️',
     description: 'Classic propeller airplane',
     difficulty: 'medium',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'airplane-2',
@@ -188,8 +160,6 @@ const coloringSheets: ColoringSheet[] = [
     image: '🛩️',
     description: 'Fast and agile jet',
     difficulty: 'hard',
-    unlocked: false,
-    downloaded: false
   },
   {
     id: 'airplane-3',
@@ -199,12 +169,11 @@ const coloringSheets: ColoringSheet[] = [
     image: '🛩️',
     description: 'Heavy lift cargo plane',
     difficulty: 'hard',
-    unlocked: false,
-    downloaded: false
   }
 ];
 
 const categoryIcons = {
+  all: '🎨', // Added 'all' category icon
   cars: '🚗',
   animals: '🐾',
   flowers: '🌸',
@@ -265,7 +234,7 @@ export function ColoringRedemption({ points, onRedeem, onDownload, redeemedSheet
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 p-4">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 p-4 overflow-auto"> {/* Added overflow-auto */}
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -316,7 +285,7 @@ export function ColoringRedemption({ points, onRedeem, onDownload, redeemedSheet
                     className="flex items-center gap-2"
                     hapticType="light"
                   >
-                    <span>{category === 'all' ? '🎨' : categoryIcons[category as keyof typeof categoryIcons]}</span>
+                    <span>{categoryIcons[category as keyof typeof categoryIcons]}</span>
                     <span className="capitalize">{category}</span>
                   </HapticButton>
                 ))}

@@ -82,6 +82,16 @@ interface Profile {
   dailyStreak: number;
   lastLogin: string;
   redeemedColoringSheets: string[];
+  gameProgress: { // Added gameProgress to store individual game states
+    letterMatch?: number;
+    wordBuilder?: number;
+    memoryGame?: number;
+    numberRecognition?: number;
+    tracingGame?: number;
+    fallingLetters?: { score: number; targetLetter: string };
+    puzzleGame?: number;
+    shapeRecognition?: { level: number; question: number };
+  };
 }
 
 interface AlphabetCard {
@@ -206,7 +216,7 @@ export default function App() {
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [levelUpData, setLevelUpData] = useState<{ level: number; xpGained: number } | null>(null);
 
-  // Game specific states
+  // Game specific states (will be initialized from profile.gameProgress)
   const [letterMatchQuestion, setLetterMatchQuestion] = useState(0);
   const [wordBuilderWord, setWordBuilderWord] = useState(0);
   const [memoryGameLevel, setMemoryGameLevel] = useState(0);
@@ -264,6 +274,23 @@ export default function App() {
       localStorage.setItem('hebrew_learning_profiles', JSON.stringify(profiles));
     }
   }, [profiles]);
+
+  useEffect(() => {
+    // When currentProfile changes, initialize game states
+    if (currentProfile) {
+      setLetterMatchQuestion(currentProfile.gameProgress.letterMatch || 0);
+      setWordBuilderWord(currentProfile.gameProgress.wordBuilder || 0);
+      setMemoryGameLevel(currentProfile.gameProgress.memoryGame || 0);
+      setNumberRecognitionQuestion(currentProfile.gameProgress.numberRecognition || 0);
+      setTracingGameLetter(currentProfile.gameProgress.tracingGame || 0);
+      setFallingLettersScore(currentProfile.gameProgress.fallingLetters?.score || 0);
+      setFallingLettersCorrectLetter(currentProfile.gameProgress.fallingLetters?.targetLetter || '');
+      setPuzzleGameWord(currentProfile.gameProgress.puzzleGame || 0);
+      setShapeRecognitionLevel(currentProfile.gameProgress.shapeRecognition?.level || 0);
+      setShapeRecognitionQuestion(currentProfile.gameProgress.shapeRecognition?.question || 0);
+    }
+  }, [currentProfile]);
+
 
   useEffect(() => {
     // Prevent body scroll when a game is active
@@ -398,6 +425,7 @@ export default function App() {
       dailyStreak: 0,
       lastLogin: new Date().toISOString().split('T')[0],
       redeemedColoringSheets: [],
+      gameProgress: {}, // Initialize empty game progress
     };
     setProfiles(prev => [...prev, newProfile]);
     setCurrentProfile(newProfile);
@@ -407,7 +435,7 @@ export default function App() {
     toast({
       title: "Profile Created!",
       description: `Welcome, ${newProfile.name}!`,
-      variant: "success", // Fixed: 'success' variant is now supported
+      variant: "success",
     });
   };
 
@@ -443,7 +471,7 @@ export default function App() {
     toast({
       title: "Profile Updated!",
       description: `Your profile has been updated.`,
-      variant: "success", // Fixed: 'success' variant is now supported
+      variant: "success",
     });
   };
 
@@ -470,21 +498,32 @@ export default function App() {
     const currentCard = alphabetCards[letterMatchQuestion];
     if (selectedLetter === currentCard.letter) {
       addXp(10);
+      const nextQuestion = letterMatchQuestion + 1;
+      const isGameComplete = nextQuestion >= alphabetCards.length;
+
+      updateProfile({
+        ...currentProfile,
+        gameProgress: {
+          ...currentProfile.gameProgress,
+          letterMatch: isGameComplete ? 0 : nextQuestion, // Reset or advance
+        },
+      });
+
       toast({
         title: "Correct!",
-        description: `You matched ${currentCard.hebrew}!`, // Fixed: 'hebrew' property now exists
-        variant: "success", // Fixed: 'success' variant is now supported
+        description: `You matched ${currentCard.hebrew}!`,
+        variant: "success",
       });
-      if (letterMatchQuestion < alphabetCards.length - 1) {
-        setLetterMatchQuestion(prev => prev + 1);
-      } else {
+
+      if (isGameComplete) {
         toast({
           title: "Game Complete!",
           description: "You've mastered all the letters!",
           variant: "default",
         });
         setView('games');
-        setLetterMatchQuestion(0); // Reset for next play
+      } else {
+        setLetterMatchQuestion(nextQuestion);
       }
     } else {
       toast({
@@ -501,16 +540,20 @@ export default function App() {
   const [wordBuilderFeedback, setWordBuilderFeedback] = useState<'correct' | 'incorrect' | null>(null);
 
   useEffect(() => {
-    if (view === 'word-builder' && words[wordBuilderWord]) {
-      const targetWord = words[wordBuilderWord];
-      setBuiltWordLetters([]);
-      // Shuffle letters of the target word and add some random letters
-      const allLetters = [...new Set([...targetWord.letters, ...alphabetCards.map(c => c.letter)])];
-      const shuffledOptions = allLetters.sort(() => Math.random() - 0.5).slice(0, 8); // Max 8 options
-      setWordBuilderOptions(shuffledOptions);
-      setWordBuilderFeedback(null);
+    if (view === 'word-builder') {
+      const initialWordIndex = currentProfile?.gameProgress.wordBuilder || 0;
+      setWordBuilderWord(initialWordIndex);
+      if (words[initialWordIndex]) {
+        const targetWord = words[initialWordIndex];
+        setBuiltWordLetters([]);
+        // Shuffle letters of the target word and add some random letters
+        const allLetters = [...new Set([...targetWord.letters, ...alphabetCards.map(c => c.letter)])];
+        const shuffledOptions = allLetters.sort(() => Math.random() - 0.5).slice(0, 8); // Max 8 options
+        setWordBuilderOptions(shuffledOptions);
+        setWordBuilderFeedback(null);
+      }
     }
-  }, [view, wordBuilderWord]);
+  }, [view, currentProfile]); // Depend on currentProfile to load initial state
 
   const handleAddLetterToWord = (letter: string) => {
     setBuiltWordLetters(prev => [...prev, letter]);
@@ -531,19 +574,29 @@ export default function App() {
       toast({
         title: "Correct!",
         description: `You built "${targetWord.hebrew}"!`,
-        variant: "success", // Fixed: 'success' variant is now supported
+        variant: "success",
       });
       setTimeout(() => {
-        if (wordBuilderWord < words.length - 1) {
-          setWordBuilderWord(prev => prev + 1);
-        } else {
+        const nextWordIndex = wordBuilderWord + 1;
+        const isGameComplete = nextWordIndex >= words.length;
+
+        updateProfile({
+          ...currentProfile,
+          gameProgress: {
+            ...currentProfile.gameProgress,
+            wordBuilder: isGameComplete ? 0 : nextWordIndex, // Reset or advance
+          },
+        });
+
+        if (isGameComplete) {
           toast({
             title: "Game Complete!",
             description: "You've mastered all the words!",
             variant: "default",
           });
           setView('games');
-          setWordBuilderWord(0);
+        } else {
+          setWordBuilderWord(nextWordIndex);
         }
       }, 1500);
     } else {
@@ -567,12 +620,14 @@ export default function App() {
 
   useEffect(() => {
     if (view === 'memory-game') {
-      initializeMemoryGame();
+      const initialLevel = currentProfile?.gameProgress.memoryGame || 0;
+      setMemoryGameLevel(initialLevel);
+      initializeMemoryGame(initialLevel);
     }
-  }, [view, memoryGameLevel]);
+  }, [view, currentProfile]); // Depend on currentProfile to load initial state
 
-  const initializeMemoryGame = () => {
-    const numPairs = Math.min(4 + memoryGameLevel, words.length); // Increase pairs with level
+  const initializeMemoryGame = (level: number) => {
+    const numPairs = Math.min(4 + level, words.length); // Increase pairs with level
     const selectedWords = words.slice(0, numPairs);
     let cards: MemoryCard[] = [];
 
@@ -621,7 +676,7 @@ export default function App() {
         toast({
           title: "Match!",
           description: `You found a pair for "${card1.hebrew}"!`,
-          variant: "success", // Fixed: 'success' variant is now supported
+          variant: "success",
         });
       } else {
         // No match, flip back after a delay
@@ -652,35 +707,49 @@ export default function App() {
         variant: "default",
       });
       setTimeout(() => {
-        if (memoryGameLevel < 2) { // Max 3 levels for now
-          setMemoryGameLevel(prev => prev + 1);
-          initializeMemoryGame(); // Start next level
-        } else {
+        const nextLevel = memoryGameLevel + 1;
+        const isGameComplete = nextLevel > 2; // Max 3 levels for now
+
+        updateProfile({
+          ...currentProfile!,
+          gameProgress: {
+            ...currentProfile!.gameProgress,
+            memoryGame: isGameComplete ? 0 : nextLevel, // Reset or advance
+          },
+        });
+
+        if (isGameComplete) {
           setView('games');
-          setMemoryGameLevel(0); // Reset for next play
+        } else {
+          setMemoryGameLevel(nextLevel);
+          initializeMemoryGame(nextLevel); // Start next level
         }
       }, 1500);
     }
-  }, [matchedPairs, memoryCards.length]);
+  }, [matchedPairs, memoryCards.length, memoryGameLevel, currentProfile]);
 
   // Number Recognition Game
   const [numberRecognitionFeedback, setNumberRecognitionFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [numbersOptions, setNumbersOptions] = useState<number[]>([]);
 
   useEffect(() => {
-    if (view === 'number-recognition' && numbers[numberRecognitionQuestion]) {
-      const targetNumber = numbers[numberRecognitionQuestion];
-      const options = [targetNumber.value];
-      while (options.length < 4) {
-        const randomNum = Math.floor(Math.random() * 5) + 1; // Numbers 1-5
-        if (!options.includes(randomNum)) {
-          options.push(randomNum);
+    if (view === 'number-recognition') {
+      const initialQuestion = currentProfile?.gameProgress.numberRecognition || 0;
+      setNumberRecognitionQuestion(initialQuestion);
+      if (numbers[initialQuestion]) {
+        const targetNumber = numbers[initialQuestion];
+        const options = [targetNumber.value];
+        while (options.length < 4) {
+          const randomNum = Math.floor(Math.random() * 5) + 1; // Numbers 1-5
+          if (!options.includes(randomNum)) {
+            options.push(randomNum);
+          }
         }
+        setNumbersOptions(options.sort(() => Math.random() - 0.5));
+        setNumberRecognitionFeedback(null);
       }
-      setNumbersOptions(options.sort(() => Math.random() - 0.5));
-      setNumberRecognitionFeedback(null);
     }
-  }, [view, numberRecognitionQuestion]);
+  }, [view, currentProfile]); // Depend on currentProfile to load initial state
 
   const handleNumberSelect = (selectedNum: number) => {
     if (!currentProfile || numberRecognitionFeedback) return;
@@ -692,19 +761,29 @@ export default function App() {
       toast({
         title: "Correct!",
         description: `That's "${currentNumber.hebrew}"!`,
-        variant: "success", // Fixed: 'success' variant is now supported
+        variant: "success",
       });
       setTimeout(() => {
-        if (numberRecognitionQuestion < numbers.length - 1) {
-          setNumberRecognitionQuestion(prev => prev + 1);
-        } else {
+        const nextQuestion = numberRecognitionQuestion + 1;
+        const isGameComplete = nextQuestion >= numbers.length;
+
+        updateProfile({
+          ...currentProfile,
+          gameProgress: {
+            ...currentProfile.gameProgress,
+            numberRecognition: isGameComplete ? 0 : nextQuestion, // Reset or advance
+          },
+        });
+
+        if (isGameComplete) {
           toast({
             title: "Game Complete!",
             description: "You've mastered number recognition!",
             variant: "default",
           });
           setView('games');
-          setNumberRecognitionQuestion(0);
+        } else {
+          setNumberRecognitionQuestion(nextQuestion);
         }
       }, 1500);
     } else {
@@ -726,28 +805,32 @@ export default function App() {
   const [tracingFeedback, setTracingFeedback] = useState<'correct' | 'incorrect' | null>(null);
 
   useEffect(() => {
-    if (view === 'tracing-game' && tracingLetters[tracingGameLetter]) {
-      const canvas = tracingCanvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+    if (view === 'tracing-game') {
+      const initialLetter = currentProfile?.gameProgress.tracingGame || 0;
+      setTracingGameLetter(initialLetter);
+      if (tracingLetters[initialLetter]) {
+        const canvas = tracingCanvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
 
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw the letter outline
-      const currentLetter = tracingLetters[tracingGameLetter];
-      ctx.strokeStyle = '#ccc';
-      ctx.lineWidth = 5;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      const path = new Path2D(currentLetter.path);
-      ctx.stroke(path);
+        // Draw the letter outline
+        const currentLetter = tracingLetters[initialLetter];
+        ctx.strokeStyle = '#ccc';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        const path = new Path2D(currentLetter.path);
+        ctx.stroke(path);
 
-      setTracingPathProgress(0);
-      setTracingFeedback(null);
+        setTracingPathProgress(0);
+        setTracingFeedback(null);
+      }
     }
-  }, [view, tracingGameLetter]);
+  }, [view, currentProfile]); // Depend on currentProfile to load initial state
 
   const getTracingCanvasCoordinates = (clientX: number, clientY: number) => {
     const canvas = tracingCanvasRef.current;
@@ -841,19 +924,29 @@ export default function App() {
       toast({
         title: "Great Tracing!",
         description: `You traced "${tracingLetters[tracingGameLetter].hebrew}"!`,
-        variant: "success", // Fixed: 'success' variant is now supported
+        variant: "success",
       });
       setTimeout(() => {
-        if (tracingGameLetter < tracingLetters.length - 1) {
-          setTracingGameLetter(prev => prev + 1);
-        } else {
+        const nextLetter = tracingGameLetter + 1;
+        const isGameComplete = nextLetter >= tracingLetters.length;
+
+        updateProfile({
+          ...currentProfile,
+          gameProgress: {
+            ...currentProfile.gameProgress,
+            tracingGame: isGameComplete ? 0 : nextLetter, // Reset or advance
+          },
+        });
+
+        if (isGameComplete) {
           toast({
             title: "Game Complete!",
             description: "You've mastered tracing all letters!",
             variant: "default",
           });
           setView('games');
-          setTracingGameLetter(0);
+        } else {
+          setTracingGameLetter(nextLetter);
         }
       }, 1500);
     } else {
@@ -885,7 +978,20 @@ export default function App() {
 
   // Falling Letters Game
   useEffect(() => {
-    if (view === 'falling-letters' && fallingLettersGameActive) {
+    if (view === 'falling-letters') {
+      const initialScore = currentProfile?.gameProgress.fallingLetters?.score || 0;
+      const initialTargetLetter = currentProfile?.gameProgress.fallingLetters?.targetLetter || '';
+      setFallingLettersScore(initialScore);
+      setFallingLettersCorrectLetter(initialTargetLetter);
+      // If game was active, resume it
+      if (initialTargetLetter) {
+        setFallingLettersGameActive(true);
+      }
+    }
+  }, [view, currentProfile]);
+
+  useEffect(() => {
+    if (fallingLettersGameActive) {
       const interval = setInterval(() => {
         setFallingLetters(prev => {
           const newLetters = prev.map(letter => ({
@@ -899,7 +1005,7 @@ export default function App() {
             newLetters.push({
               id: Date.now() + Math.random(),
               letter: randomLetter.letter,
-              hebrew: randomLetter.hebrew, // Fixed: 'hebrew' property now exists
+              hebrew: randomLetter.hebrew,
               x: Math.random() * (window.innerWidth - 100) + 50,
               y: -50, // Start above screen
               speed: Math.random() * 2 + 1, // Random speed
@@ -921,10 +1027,18 @@ export default function App() {
   };
 
   const pickNewFallingLetterTarget = () => {
-    const target = alphabetCards.find(a => a.letter === fallingLettersCorrectLetter);
-    if (target) { // Ensure target is found before accessing hebrew
-      playHebrewSound(target.hebrew); // Fixed: 'hebrew' property now exists
-    }
+    const target = alphabetCards[Math.floor(Math.random() * alphabetCards.length)];
+    setFallingLettersCorrectLetter(target.letter);
+    playHebrewSound(target.hebrew);
+
+    // Update profile progress
+    updateProfile({
+      ...currentProfile!,
+      gameProgress: {
+        ...currentProfile!.gameProgress,
+        fallingLetters: { score: fallingLettersScore, targetLetter: target.letter },
+      },
+    });
   };
 
   const handleFallingLetterClick = (clickedLetter: FallingLetter) => {
@@ -932,13 +1046,15 @@ export default function App() {
 
     if (clickedLetter.letter === fallingLettersCorrectLetter) {
       addXp(5);
-      setFallingLettersScore(prev => prev + 1);
+      const newScore = fallingLettersScore + 1;
+      setFallingLettersScore(newScore);
       setFallingLetters(prev => prev.filter(l => l.id !== clickedLetter.id)); // Remove clicked letter
-      pickNewFallingLetterTarget();
+      pickNewFallingLetterTarget(); // Pick new target immediately
+
       toast({
         title: "Good Catch!",
         description: `You caught the ${clickedLetter.hebrew}!`,
-        variant: "success", // Fixed: 'success' variant is now supported
+        variant: "success",
       });
     } else {
       toast({
@@ -954,13 +1070,17 @@ export default function App() {
   const [puzzleFeedback, setPuzzleFeedback] = useState<'correct' | 'incorrect' | null>(null);
 
   useEffect(() => {
-    if (view === 'puzzle-game' && words[puzzleGameWord]) {
-      initializePuzzleGame();
+    if (view === 'puzzle-game') {
+      const initialWordIndex = currentProfile?.gameProgress.puzzleGame || 0;
+      setPuzzleGameWord(initialWordIndex);
+      if (words[initialWordIndex]) {
+        initializePuzzleGame(initialWordIndex);
+      }
     }
-  }, [view, puzzleGameWord]);
+  }, [view, currentProfile]); // Depend on currentProfile to load initial state
 
-  const initializePuzzleGame = () => {
-    const targetWord = words[puzzleGameWord];
+  const initializePuzzleGame = (wordIndex: number) => {
+    const targetWord = words[wordIndex];
     const pieces: PuzzlePiece[] = targetWord.letters.map((letter, index) => ({
       id: index,
       hebrew: letter,
@@ -991,19 +1111,30 @@ export default function App() {
       toast({
         title: "Puzzle Solved!",
         description: `You built "${words[puzzleGameWord].hebrew}"!`,
-        variant: "success", // Fixed: 'success' variant is now supported
+        variant: "success",
       });
       setTimeout(() => {
-        if (puzzleGameWord < words.length - 1) {
-          setPuzzleGameWord(prev => prev + 1);
-        } else {
+        const nextWordIndex = puzzleGameWord + 1;
+        const isGameComplete = nextWordIndex >= words.length;
+
+        updateProfile({
+          ...currentProfile,
+          gameProgress: {
+            ...currentProfile.gameProgress,
+            puzzleGame: isGameComplete ? 0 : nextWordIndex, // Reset or advance
+          },
+        });
+
+        if (isGameComplete) {
           toast({
             title: "Game Complete!",
             description: "You've solved all the word puzzles!",
             variant: "default",
           });
           setView('games');
-          setPuzzleGameWord(0);
+        } else {
+          setPuzzleGameWord(nextWordIndex);
+          initializePuzzleGame(nextWordIndex); // Load next puzzle
         }
       }, 1500);
     } else {
@@ -1032,7 +1163,7 @@ export default function App() {
       toast({
         title: "Sheet Unlocked!",
         description: "You can now color and download this sheet!",
-        variant: "success", // Fixed: 'success' variant is now supported
+        variant: "success",
       });
     } else {
       toast({
@@ -1385,7 +1516,7 @@ export default function App() {
                         <HapticButton
                           variant="ghost"
                           size="icon"
-                          onClick={() => playHebrewSound(card.hebrew)} // Fixed: 'hebrew' property now exists
+                          onClick={() => playHebrewSound(card.hebrew)}
                           className="mt-2"
                           hapticType="light"
                         >
@@ -1463,15 +1594,15 @@ export default function App() {
       case 'games':
         if (!currentProfile) return null;
         const availableGames: Game[] = [
-          { id: 'letter-match', title: 'Letter Match', icon: Type, description: 'Match Hebrew letters to their sounds.', progress: 0, locked: false },
-          { id: 'word-builder', title: 'Word Builder', icon: Lightbulb, description: 'Build Hebrew words letter by letter.', progress: 0, locked: false },
-          { id: 'memory-game', title: 'Memory Game', icon: Brain, description: 'Find matching pairs of Hebrew words.', progress: 0, locked: false },
-          { id: 'number-recognition', title: 'Number Recognition', icon: Zap, description: 'Identify Hebrew numbers.', progress: 0, locked: false },
-          { id: 'tracing-game', title: 'Letter Tracing', icon: Fingerprint, description: 'Practice writing Hebrew letters.', progress: 0, locked: false },
-          { id: 'falling-letters', title: 'Falling Letters', icon: Hand, description: 'Catch the correct Hebrew letters.', progress: 0, locked: false },
-          { id: 'puzzle-game', title: 'Word Puzzle', icon: Puzzle, description: 'Arrange letters to form Hebrew words.', progress: 0, locked: false },
-          { id: 'shape-recognition', title: 'Shape Recognition', icon: Shapes, description: 'Learn Hebrew names for shapes.', progress: 0, locked: false },
-          { id: 'coloring-redemption', title: 'Coloring Fun', icon: Palette, description: 'Unlock and color fun sheets!', progress: 0, locked: false },
+          { id: 'letter-match', title: 'Letter Match', icon: Type, description: 'Match Hebrew letters to their sounds.', progress: currentProfile.gameProgress.letterMatch !== undefined ? (currentProfile.gameProgress.letterMatch / alphabetCards.length) * 100 : 0, locked: false },
+          { id: 'word-builder', title: 'Word Builder', icon: Lightbulb, description: 'Build Hebrew words letter by letter.', progress: currentProfile.gameProgress.wordBuilder !== undefined ? (currentProfile.gameProgress.wordBuilder / words.length) * 100 : 0, locked: false },
+          { id: 'memory-game', title: 'Memory Game', icon: Brain, description: 'Find matching pairs of Hebrew words.', progress: currentProfile.gameProgress.memoryGame !== undefined ? (currentProfile.gameProgress.memoryGame / 3) * 100 : 0, locked: false }, // Assuming 3 levels
+          { id: 'number-recognition', title: 'Number Recognition', icon: Zap, description: 'Identify Hebrew numbers.', progress: currentProfile.gameProgress.numberRecognition !== undefined ? (currentProfile.gameProgress.numberRecognition / numbers.length) * 100 : 0, locked: false },
+          { id: 'tracing-game', title: 'Letter Tracing', icon: Fingerprint, description: 'Practice writing Hebrew letters.', progress: currentProfile.gameProgress.tracingGame !== undefined ? (currentProfile.gameProgress.tracingGame / tracingLetters.length) * 100 : 0, locked: false },
+          { id: 'falling-letters', title: 'Falling Letters', icon: Hand, description: 'Catch the correct Hebrew letters.', progress: currentProfile.gameProgress.fallingLetters?.score !== undefined ? (currentProfile.gameProgress.fallingLetters.score / 20) * 100 : 0, locked: false }, // Assuming max score of 20 for progress
+          { id: 'puzzle-game', title: 'Word Puzzle', icon: Puzzle, description: 'Arrange letters to form Hebrew words.', progress: currentProfile.gameProgress.puzzleGame !== undefined ? (currentProfile.gameProgress.puzzleGame / words.length) * 100 : 0, locked: false },
+          { id: 'shape-recognition', title: 'Shape Recognition', icon: Shapes, description: 'Learn Hebrew names for shapes.', progress: currentProfile.gameProgress.shapeRecognition?.question !== undefined ? (currentProfile.gameProgress.shapeRecognition.question / 8) * 100 : 0, locked: false }, // Assuming 8 questions per level
+          { id: 'coloring-redemption', title: 'Coloring Fun', icon: Palette, description: 'Unlock and color fun sheets!', progress: (currentProfile.redeemedColoringSheets.length / 15) * 100, locked: false }, // Assuming 15 total sheets
         ];
 
         return (
@@ -1498,6 +1629,7 @@ export default function App() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-600 mb-3">{game.description}</p>
+                    <Progress value={game.progress} className="h-2 mb-3" />
                     <HapticButton
                       onClick={() => setView(game.id as any)} // Type assertion for now
                       className="w-full bg-green-600 hover:bg-green-700 text-white"
@@ -1651,7 +1783,7 @@ export default function App() {
               {/* Big Sound Button */}
               <HapticButton
                 variant="outline"
-                onClick={() => playHebrewSound(currentLetterMatchCard.hebrew)} // Fixed: 'hebrew' property now exists
+                onClick={() => playHebrewSound(currentLetterMatchCard.hebrew)}
                 className="w-20 h-20 rounded-full mx-auto"
                 hapticType="light"
               >
@@ -1726,7 +1858,7 @@ export default function App() {
 
             {/* Built Word Display */}
             <Card className="mb-6 p-4 text-center">
-              <div className="flex justify-center items-center h-20 border-2 border-dashed border-gray-300 rounded-lg text-4xl font-bold text-gray-700">
+              <div className="flex justify-center items-center h-20 border-2 border-dashed border-gray-300 rounded-lg text-4xl font-bold text-gray-700" dir="rtl"> {/* Added dir="rtl" */}
                 {builtWordLetters.length > 0 ? builtWordLetters.join('') : 'Build your word here'}
               </div>
               {wordBuilderFeedback && (
@@ -2045,7 +2177,7 @@ export default function App() {
               {/* Big Sound Button */}
               <HapticButton
                 variant="outline"
-                onClick={() => playHebrewSound(alphabetCards.find(a => a.letter === fallingLettersCorrectLetter)?.hebrew || '')} // Fixed: 'hebrew' property now exists
+                onClick={() => playHebrewSound(alphabetCards.find(a => a.letter === fallingLettersCorrectLetter)?.hebrew || '')}
                 className="w-20 h-20 rounded-full mx-auto"
                 hapticType="light"
               >
@@ -2166,7 +2298,7 @@ export default function App() {
 
               <HapticButton
                 variant="outline"
-                onClick={initializePuzzleGame}
+                onClick={initializePuzzleGame.bind(null, puzzleGameWord)} // Re-initialize current puzzle
                 className="w-full py-3 text-lg font-semibold"
                 hapticType="light"
               >
@@ -2205,16 +2337,32 @@ export default function App() {
             onBack={() => setView('games')}
             onCorrect={() => {
               addXp(10);
-              if (shapeRecognitionQuestion < 7) { // 8 questions per level
-                setShapeRecognitionQuestion(prev => prev + 1);
-              } else {
+              const nextQuestion = shapeRecognitionQuestion + 1;
+              const isLevelComplete = nextQuestion >= 8; // 8 questions per level
+
+              const updatedShapeRecognition = {
+                level: isLevelComplete ? shapeRecognitionLevel + 1 : shapeRecognitionLevel,
+                question: isLevelComplete ? 0 : nextQuestion,
+              };
+
+              updateProfile({
+                ...currentProfile,
+                gameProgress: {
+                  ...currentProfile.gameProgress,
+                  shapeRecognition: updatedShapeRecognition,
+                },
+              });
+
+              if (isLevelComplete) {
                 toast({
                   title: "Level Complete!",
                   description: "You've mastered this shape recognition level!",
                   variant: "default",
                 });
-                setShapeRecognitionLevel(prev => prev + 1);
+                setShapeRecognitionLevel(updatedShapeRecognition.level);
                 setShapeRecognitionQuestion(0);
+              } else {
+                setShapeRecognitionQuestion(nextQuestion);
               }
             }}
           />

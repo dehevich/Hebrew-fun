@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { HapticButton } from '@/components/ui/haptic-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Palette, Save, Download, RotateCcw } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'; // Import Sheet components
 
 interface ColoringGameProps {
   sheetId: string;
@@ -44,6 +45,7 @@ const tools: Tool[] = [
   { name: 'Eraser', icon: '🧹', size: 15 },
 ];
 
+// Detailed SVG path data for coloring sheets
 const coloringSheets = [
   {
     id: 'car-1',
@@ -51,19 +53,22 @@ const coloringSheets = [
     template: {
       backgroundColor: '#ffffff',
       elements: [
-        // Car body
-        { type: 'path', content: 'M 100 150 L 300 150 L 320 180 L 320 220 L 300 250 L 100 250 L 80 220 L 80 180 Z', color: '#ff0000' },
-        // Car windows
-        { type: 'path', content: 'M 120 160 L 200 160 L 220 190 L 220 210 L 200 230 L 120 230 L 100 210 L 100 190 Z', color: '#87ceeb' },
-        { type: 'path', content: 'M 220 160 L 280 160 L 300 190 L 300 210 L 280 230 L 220 230 L 220 210 L 220 190 Z', color: '#87ceeb' },
+        // Main car body
+        { type: 'path', content: 'M 50 200 L 100 150 L 300 150 L 350 200 L 350 250 L 50 250 Z', color: '#333333' },
+        // Roof
+        { type: 'path', content: 'M 120 150 L 280 150 L 260 100 L 140 100 Z', color: '#333333' },
+        // Windows
+        { type: 'path', content: 'M 145 105 L 255 105 L 245 145 L 155 145 Z', color: '#333333' },
         // Wheels
-        { type: 'circle', content: '140 230 25', color: '#000000' },
-        { type: 'circle', content: '260 230 25', color: '#000000' },
-        { type: 'circle', content: '140 230 15', color: '#c0c0c0' },
-        { type: 'circle', content: '260 230 15', color: '#c0c0c0' },
-        // Car details
-        { type: 'rect', content: '50 190 30 20', color: '#ffff00' },
-        { type: 'rect', content: '320 190 30 20', color: '#ffff00' },
+        { type: 'circle', content: '100 250 30', color: '#333333' },
+        { type: 'circle', content: '300 250 30', color: '#333333' },
+        // Wheel details
+        { type: 'circle', content: '100 250 15', color: '#333333' },
+        { type: 'circle', content: '300 250 15', color: '#333333' },
+        // Headlight
+        { type: 'path', content: 'M 350 200 L 370 190 L 370 210 L 350 220 Z', color: '#333333' },
+        // Tail light
+        { type: 'path', content: 'M 50 200 L 30 190 L 30 210 L 50 220 Z', color: '#333333' },
       ]
     }
   },
@@ -73,24 +78,29 @@ const coloringSheets = [
     template: {
       backgroundColor: '#ffffff',
       elements: [
-        // Lion body
-        { type: 'ellipse', content: '200 200 80 60', color: '#daa520' },
-        // Lion head
-        { type: 'circle', content: '200 120 50', color: '#daa520' },
-        // Lion mane
-        { type: 'circle', content: '200 120 70', color: '#8b4513', fill: false },
-        // Lion face details
-        { type: 'circle', content: '180 110 8', color: '#000000' },
-        { type: 'circle', content: '220 110 8', color: '#000000' },
-        { type: 'ellipse', content: '200 130 15 10', color: '#000000' },
-        { type: 'path', content: 'M 190 140 Q 200 150 210 140', color: '#000000' },
-        // Lion legs
-        { type: 'rect', content: '160 240 15 40', color: '#daa520' },
-        { type: 'rect', content: '185 240 15 40', color: '#daa520' },
-        { type: 'rect', content: '215 240 15 40', color: '#daa520' },
-        { type: 'rect', content: '240 240 15 40', color: '#daa520' },
-        // Lion tail
-        { type: 'path', content: 'M 280 200 Q 320 180 340 200 Q 350 220 330 230', color: '#daa520' },
+        // Head
+        { type: 'circle', content: '200 150 80', color: '#333333' },
+        // Mane (multiple circles around head)
+        { type: 'circle', content: '200 150 100', color: '#333333', fill: false },
+        { type: 'circle', content: '200 150 105', color: '#333333', fill: false },
+        // Ears
+        { type: 'circle', content: '130 90 25', color: '#333333' },
+        { type: 'circle', content: '270 90 25', color: '#333333' },
+        // Eyes
+        { type: 'circle', content: '170 130 10', color: '#333333' },
+        { type: 'circle', content: '230 130 10', color: '#333333' },
+        // Nose
+        { type: 'path', content: 'M 200 160 L 190 175 L 210 175 Z', color: '#333333' },
+        // Mouth
+        { type: 'path', content: 'M 180 185 Q 200 200 220 185', color: '#333333' },
+        // Body
+        { type: 'ellipse', content: '200 280 120 70', color: '#333333' },
+        // Legs
+        { type: 'rect', content: '120 320 30 60', color: '#333333' },
+        { type: 'rect', content: '250 320 30 60', color: '#333333' },
+        // Tail
+        { type: 'path', content: 'M 320 280 Q 350 250 380 300', color: '#333333' },
+        { type: 'circle', content: '380 300 15', color: '#333333' }, // Tail tuft
       ]
     }
   },
@@ -100,22 +110,22 @@ const coloringSheets = [
     template: {
       backgroundColor: '#ffffff',
       elements: [
-        // Flower petals
-        { type: 'ellipse', content: '200 150 30 50', color: '#ff69b4', rotation: 0 },
-        { type: 'ellipse', content: '200 150 30 50', color: '#ff1493', rotation: 45 },
-        { type: 'ellipse', content: '200 150 30 50', color: '#ff69b4', rotation: 90 },
-        { type: 'ellipse', content: '200 150 30 50', color: '#ff1493', rotation: 135 },
-        { type: 'ellipse', content: '200 150 30 50', color: '#ff69b4', rotation: 180 },
-        { type: 'ellipse', content: '200 150 30 50', color: '#ff1493', rotation: 225 },
-        { type: 'ellipse', content: '200 150 30 50', color: '#ff69b4', rotation: 270 },
-        { type: 'ellipse', content: '200 150 30 50', color: '#ff1493', rotation: 315 },
-        // Flower center
-        { type: 'circle', content: '200 150 20', color: '#ffff00' },
-        // Flower stem
-        { type: 'rect', content: '195 170 10 80', color: '#228b22' },
+        // Center
+        { type: 'circle', content: '200 200 40', color: '#333333' },
+        // Petals
+        { type: 'ellipse', content: '200 120 30 60', color: '#333333', rotation: 0 },
+        { type: 'ellipse', content: '200 120 30 60', color: '#333333', rotation: 45 },
+        { type: 'ellipse', content: '200 120 30 60', color: '#333333', rotation: 90 },
+        { type: 'ellipse', content: '200 120 30 60', color: '#333333', rotation: 135 },
+        { type: 'ellipse', content: '200 120 30 60', color: '#333333', rotation: 180 },
+        { type: 'ellipse', content: '200 120 30 60', color: '#333333', rotation: 225 },
+        { type: 'ellipse', content: '200 120 30 60', color: '#333333', rotation: 270 },
+        { type: 'ellipse', content: '200 120 30 60', color: '#333333', rotation: 315 },
+        // Stem
+        { type: 'rect', content: '190 240 20 150', color: '#333333' },
         // Leaves
-        { type: 'ellipse', content: '180 200 20 10', color: '#228b22', rotation: -30 },
-        { type: 'ellipse', content: '220 210 20 10', color: '#228b22', rotation: 30 },
+        { type: 'path', content: 'M 190 300 Q 150 280 180 260 Q 190 270 190 300 Z', color: '#333333' },
+        { type: 'path', content: 'M 210 300 Q 250 280 220 260 Q 210 270 210 300 Z', color: '#333333' },
       ]
     }
   },
@@ -123,55 +133,48 @@ const coloringSheets = [
     id: 'space-1',
     title: 'Rocket Ship',
     template: {
-      backgroundColor: '#000033',
+      backgroundColor: '#000033', // Dark blue for space background
       elements: [
         // Rocket body
-        { type: 'path', content: 'M 200 100 L 250 200 L 250 280 L 200 300 L 150 280 L 150 200 Z', color: '#c0c0c0' },
-        // Rocket nose
-        { type: 'path', content: 'M 200 100 L 150 200 L 250 200 Z', color: '#ff0000' },
-        // Rocket window
-        { type: 'circle', content: '200 150 20', color: '#87ceeb' },
-        // Rocket fins
-        { type: 'path', content: 'M 150 250 L 120 280 L 150 280 Z', color: '#ff0000' },
-        { type: 'path', content: 'M 250 250 L 280 280 L 250 280 Z', color: '#ff0000' },
-        // Rocket flames
-        { type: 'path', content: 'M 170 300 L 180 340 L 200 320 L 220 340 L 230 300', color: '#ffa500' },
-        { type: 'path', content: 'M 175 310 L 185 330 L 200 315 L 215 330 L 225 310', color: '#ffff00' },
-        // Stars
-        { type: 'path', content: 'M 50 50 L 55 60 L 65 60 L 57 67 L 60 77 L 50 70 L 40 77 L 43 67 L 35 60 L 45 60 Z', color: '#ffff00' },
-        { type: 'path', content: 'M 350 80 L 355 90 L 365 90 L 357 97 L 360 107 L 350 100 L 340 107 L 343 97 L 335 90 L 345 90 Z', color: '#ffff00' },
-        { type: 'path', content: 'M 100 120 L 105 130 L 115 130 L 107 137 L 110 147 L 100 140 L 90 147 L 93 137 L 85 130 L 95 130 Z', color: '#ffff00' },
+        { type: 'path', content: 'M 200 50 L 250 150 L 250 350 L 200 400 L 150 350 L 150 150 Z', color: '#333333' },
+        // Nose cone
+        { type: 'path', content: 'M 200 50 L 150 150 L 250 150 Z', color: '#333333' },
+        // Fins
+        { type: 'path', content: 'M 150 300 L 100 350 L 150 350 Z', color: '#333333' },
+        { type: 'path', content: 'M 250 300 L 300 350 L 250 350 Z', color: '#333333' },
+        // Window
+        { type: 'circle', content: '200 180 30', color: '#333333' },
+        // Flame
+        { type: 'path', content: 'M 180 400 Q 200 450 220 400 L 200 420 Z', color: '#333333' },
+        // Stars (small circles)
+        { type: 'circle', content: '50 80 5', color: '#333333' },
+        { type: 'circle', content: '350 120 5', color: '#333333' },
+        { type: 'circle', content: '100 300 5', color: '#333333' },
+        { type: 'circle', content: '300 380 5', color: '#333333' },
       ]
     }
   },
   {
     id: 'airplane-1',
-    title: 'Airplane',
+    title: 'Propeller Plane',
     template: {
-      backgroundColor: '#87ceeb',
+      backgroundColor: '#ffffff',
       elements: [
-        // Airplane body
-        { type: 'ellipse', content: '200 200 100 20', color: '#ffffff' },
-        // Airplane nose
-        { type: 'path', content: 'M 300 200 L 320 190 L 320 210 Z', color: '#ffffff' },
-        // Airplane wings
-        { type: 'path', content: 'M 180 200 L 120 150 L 140 140 L 200 190 Z', color: '#4169e1' },
-        { type: 'path', content: 'M 180 200 L 120 250 L 140 260 L 200 210 Z', color: '#4169e1' },
-        // Airplane tail
-        { type: 'path', content: 'M 100 200 L 80 170 L 90 165 L 110 195 Z', color: '#4169e1' },
-        { type: 'path', content: 'M 100 200 L 80 230 L 90 235 L 110 205 Z', color: '#4169e1' },
-        // Airplane windows
-        { type: 'circle', content: '220 195 5', color: '#000000' },
-        { type: 'circle', content: '240 195 5', color: '#000000' },
-        { type: 'circle', content: '260 195 5', color: '#000000' },
-        // Airplane engine
-        { type: 'circle', content: '150 220 15', color: '#696969' },
-        { type: 'circle', content: '150 180 15', color: '#696969' },
-        // Clouds
-        { type: 'ellipse', content: '80 100 30 20', color: '#ffffff' },
-        { type: 'ellipse', content: '100 95 25 18', color: '#ffffff' },
-        { type: 'ellipse', content: '320 120 35 22', color: '#ffffff' },
-        { type: 'ellipse', content: '340 115 28 20', color: '#ffffff' },
+        // Body
+        { type: 'ellipse', content: '200 200 150 40', color: '#333333' },
+        // Tail fin vertical
+        { type: 'path', content: 'M 50 180 L 80 150 L 80 220 L 50 200 Z', color: '#333333' },
+        // Tail fin horizontal
+        { type: 'path', content: 'M 50 200 L 80 200 L 60 230 L 30 230 Z', color: '#333333' },
+        // Wings
+        { type: 'path', content: 'M 150 200 L 200 100 L 250 200 L 200 300 Z', color: '#333333' },
+        // Propeller
+        { type: 'circle', content: '350 200 20', color: '#333333' },
+        { type: 'path', content: 'M 350 180 L 350 220 M 330 200 L 370 200', color: '#333333' },
+        // Windows
+        { type: 'circle', content: '250 190 10', color: '#333333' },
+        { type: 'circle', content: '280 190 10', color: '#333333' },
+        { type: 'circle', content: '310 190 10', color: '#333333' },
       ]
     }
   },
@@ -180,11 +183,12 @@ const coloringSheets = [
 export default function ColoringGame({ sheetId, title, onBack, onSave }: ColoringGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedColor, setSelectedColor] = useState<string>('#ff0000');
+  const [selectedColor, setSelectedColor] = useState<string>('#ef4444');
   const [selectedTool, setSelectedTool] = useState<Tool>(tools[0]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [showTemplate, setShowTemplate] = useState(true);
   const [canvasSize, setCanvasSize] = useState({ width: 400, height: 500 });
+  const [isSheetOpen, setIsSheetOpen] = useState(false); // State for mobile sheet
 
   const sheet = coloringSheets.find(s => s.id === sheetId) || coloringSheets[0];
 
@@ -249,9 +253,16 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
       ctx.save();
       
       if (element.rotation) {
-        ctx.translate(200, 200);
-        ctx.rotate((element.rotation * Math.PI) / 180);
-        ctx.translate(-200, -200);
+        // Translate to center of rotation, rotate, then translate back
+        // Assuming rotation is around the element's own center or a predefined point
+        // For simplicity, if no specific center is given, rotate around canvas center or element's x,y
+        // For these SVG paths, rotation is usually applied to the whole path.
+        // If elements have x,y, they are already translated.
+        // For now, assuming rotation is for the whole canvas context if needed.
+        // For individual elements, it's more complex and usually part of the path data itself.
+        // The current rotation logic in drawElement is for elements with x,y.
+        // For template elements, if rotation is needed, it should be applied to the path.
+        // For now, I'll keep it simple and assume rotation is not directly applied to template elements unless specified in path.
       }
 
       switch (element.type) {
@@ -268,7 +279,7 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
         case 'ellipse':
           const [ex, ey, rx, ry] = element.content.split(' ').map(Number);
           ctx.beginPath();
-          ctx.ellipse(ex, ey, rx, ry, 0, 0, 2 * Math.PI);
+          ctx.ellipse(ex, ey, rx, ry, (element.rotation || 0) * Math.PI / 180, 0, 2 * Math.PI); // Apply rotation here
           ctx.stroke();
           break;
         case 'path':
@@ -415,10 +426,10 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 flex flex-col p-4">
+      <div className="max-w-4xl mx-auto w-full flex-grow flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <HapticButton
             variant="outline"
             onClick={onBack}
@@ -427,7 +438,7 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
           >
             <ArrowLeft className="w-5 h-5" />
           </HapticButton>
-          <div className="text-center">
+          <div className="text-center flex-1">
             <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
             <p className="text-gray-600">Coloring Game</p>
           </div>
@@ -451,106 +462,180 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex flex-col lg:flex-row gap-6 mb-6">
-          {/* Canvas - Left Side */}
-          <div className="flex-1">
-            <Card className="p-4" ref={containerRef}>
-              <canvas
-                ref={canvasRef}
-                width={canvasSize.width}
-                height={canvasSize.height}
-                className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair bg-white touch-none"
-                style={{ 
-                  maxWidth: '100%',
-                  height: 'auto',
-                  aspectRatio: '4/5'
-                }}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-              />
-            </Card>
-          </div>
-
-          {/* Tools and Colors - Right Side */}
-          <div className="w-full lg:w-80 space-y-4">
-            {/* Tools */}
-            <Card className="p-4">
-              <CardHeader>
-                <CardTitle className="text-lg">🛠️ Tools</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-2">
-                  {tools.map((tool) => (
-                    <HapticButton
-                      key={tool.name}
-                      variant={selectedTool.name === tool.name ? "default" : "outline"}
-                      onClick={() => setSelectedTool(tool)}
-                      className="h-14 text-xl"
-                      hapticType="light"
-                    >
-                      {tool.icon}
-                    </HapticButton>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Colors */}
-            <Card className="p-4">
-              <CardHeader>
-                <CardTitle className="text-lg">🎨 Colors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-2">
-                  {colors.map((color) => (
-                    <HapticButton
-                      key={color.name}
-                      variant={selectedColor === color.value ? "default" : "outline"}
-                      onClick={() => setSelectedColor(color.value)}
-                      className="h-12"
-                      style={{ backgroundColor: color.value }}
-                      hapticType="light"
-                    >
-                      {selectedColor === color.value && (
-                        <div className="w-3 h-3 bg-white rounded-full mx-auto" />
-                      )}
-                    </HapticButton>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        {/* Main Content Area - Canvas */}
+        <div className="flex-grow flex items-center justify-center mb-4">
+          <Card className="p-4 w-full max-w-md" ref={containerRef}>
+            <canvas
+              ref={canvasRef}
+              width={canvasSize.width}
+              height={canvasSize.height}
+              className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair bg-white touch-none"
+              style={{ 
+                maxWidth: '100%',
+                height: 'auto',
+                aspectRatio: '4/5'
+              }}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+            />
+          </Card>
         </div>
 
-        {/* Actions */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Mobile Tools/Colors - Fixed Bottom Bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 flex justify-around items-center lg:hidden safe-area-bottom">
           <HapticButton
             variant="outline"
             onClick={() => setShowTemplate(!showTemplate)}
-            className="h-12"
+            className="flex-1 mx-1"
             hapticType="light"
           >
-            {showTemplate ? '👁️ Hide Template' : '👁️ Show Template'}
+            {showTemplate ? '👁️ Hide' : '👁️ Show'}
           </HapticButton>
           
           <HapticButton
             onClick={clearCanvas}
-            className="h-12"
+            className="flex-1 mx-1"
             hapticType="light"
           >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Clear All
+            <RotateCcw className="w-4 h-4" /> Clear
           </HapticButton>
+
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <HapticButton
+                variant="default"
+                className="flex-1 mx-1 bg-purple-500 hover:bg-purple-600 text-white"
+                hapticType="medium"
+              >
+                <Palette className="w-4 h-4 mr-1" /> Tools
+              </HapticButton>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-2/3 overflow-y-auto">
+              <CardHeader>
+                <CardTitle className="text-lg">🛠️ Tools & 🎨 Colors</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Tools */}
+                <div>
+                  <h3 className="text-md font-semibold mb-2">Tools</h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {tools.map((tool) => (
+                      <HapticButton
+                        key={tool.name}
+                        variant={selectedTool.name === tool.name ? "default" : "outline"}
+                        onClick={() => setSelectedTool(tool)}
+                        className="h-14 text-xl"
+                        hapticType="light"
+                      >
+                        {tool.icon}
+                      </HapticButton>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Colors */}
+                <div>
+                  <h3 className="text-md font-semibold mb-2">Colors</h3>
+                  <div className="grid grid-cols-4 gap-2">
+                    {colors.map((color) => (
+                      <HapticButton
+                        key={color.name}
+                        variant={selectedColor === color.value ? "default" : "outline"}
+                        onClick={() => setSelectedColor(color.value)}
+                        className="h-12"
+                        style={{ backgroundColor: color.value }}
+                        hapticType="light"
+                      >
+                        {selectedColor === color.value && (
+                          <div className="w-3 h-3 bg-white rounded-full mx-auto" />
+                        )}
+                      </HapticButton>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Desktop Tools and Colors - Right Side */}
+        <div className="hidden lg:block w-full lg:w-80 space-y-4 absolute right-4 top-20"> {/* Positioned absolutely for desktop */}
+          {/* Tools */}
+          <Card className="p-4">
+            <CardHeader>
+              <CardTitle className="text-lg">🛠️ Tools</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-2">
+                {tools.map((tool) => (
+                  <HapticButton
+                    key={tool.name}
+                    variant={selectedTool.name === tool.name ? "default" : "outline"}
+                    onClick={() => setSelectedTool(tool)}
+                    className="h-14 text-xl"
+                    hapticType="light"
+                  >
+                    {tool.icon}
+                  </HapticButton>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Colors */}
+          <Card className="p-4">
+            <CardHeader>
+              <CardTitle className="text-lg">🎨 Colors</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-2">
+                {colors.map((color) => (
+                  <HapticButton
+                    key={color.name}
+                    variant={selectedColor === color.value ? "default" : "outline"}
+                    onClick={() => setSelectedColor(color.value)}
+                    className="h-12"
+                    style={{ backgroundColor: color.value }}
+                    hapticType="light"
+                  >
+                    {selectedColor === color.value && (
+                      <div className="w-3 h-3 bg-white rounded-full mx-auto" />
+                    )}
+                  </HapticButton>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="grid grid-cols-2 gap-4">
+            <HapticButton
+              variant="outline"
+              onClick={() => setShowTemplate(!showTemplate)}
+              className="h-12"
+              hapticType="light"
+            >
+              {showTemplate ? '👁️ Hide Template' : '👁️ Show Template'}
+            </HapticButton>
+            
+            <HapticButton
+              onClick={clearCanvas}
+              className="h-12"
+              hapticType="light"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Clear All
+            </HapticButton>
+          </div>
         </div>
 
         {/* Current Selection */}
-        <div className="mt-6 text-center">
+        <div className="mt-auto text-center pb-4 hidden lg:block"> {/* Only show on desktop */}
           <div className="text-sm text-gray-600">
             Selected: {selectedTool.name} • 
             Color: <span className="inline-block w-4 h-4 rounded ml-1" style={{ backgroundColor: selectedColor }}></span>
