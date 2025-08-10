@@ -24,21 +24,6 @@ const ToastViewport = React.forwardRef<
 ))
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
-const Toast = React.forwardRef<
-  React.ElementRef<typeof ToastPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants>
->(({ className, variant, ...props }, ref) => {
-  return (
-    <ToastPrimitives.Root
-      ref={ref}
-      className={cn(toastVariants({ variant }), className)}
-      {...props}
-    />
-  )
-})
-Toast.displayName = ToastPrimitives.Root.displayName
-
 const toastVariants = cva(
   "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--swipe-end-x)] data-[swipe=cancel]:transition-[transform,opacity] data-[swipe=cancel]:duration-200 data-[swipe=cancel]:ease-out data-[swipe=active]:duration-100 data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
@@ -57,17 +42,32 @@ const toastVariants = cva(
   }
 )
 
-export interface ToastProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title' | 'description'>, VariantProps<typeof toastVariants> {
-  id: string;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  action?: React.ReactNode; // This will now be the ToastAction component instance
-  onOpenChange?: (open: boolean) => void;
+export interface ToastProps extends React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root>, VariantProps<typeof toastVariants> {
+  // The original ToastProps interface was causing a conflict.
+  // By extending ToastPrimitives.Root's props, we ensure compatibility.
+  // The 'id', 'title', 'description', 'action', 'onOpenChange' are handled by useToast hook.
 }
 
-export interface ToastActionProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ToastActionProps extends React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action> {
   altText: string;
 }
+
+const Toast = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Root>, // Ref for the actual Radix Root (div)
+  ToastProps // Use the combined props interface
+>(({ className, variant, ...props }, ref) => {
+  return (
+    // Wrap ToastPrimitives.Root in an <li> to be valid child of <ol> (ToastViewport)
+    <li className="list-none">
+      <ToastPrimitives.Root
+        ref={ref}
+        className={cn(toastVariants({ variant }), className)}
+        {...props}
+      />
+    </li>
+  )
+})
+Toast.displayName = ToastPrimitives.Root.displayName
 
 const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
@@ -128,7 +128,6 @@ ToastAction.displayName = ToastPrimitives.Action.displayName
 
 
 export {
-  type ToastProps,
   Toast,
   ToastProvider, // Re-exporting ToastProvider
   ToastViewport,

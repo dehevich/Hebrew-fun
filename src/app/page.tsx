@@ -166,6 +166,20 @@ const alphabetCards: AlphabetCard[] = [
   { letter: 'ו', name: 'Vav', sound: 'v', image: '🔗', description: 'Like "V" in Link (Vav)', hebrew: 'ו' },
   { letter: 'ז', name: 'Zayin', sound: 'z', image: '🫒', description: 'Like "Z" in Olive (Zayit)', hebrew: 'ז' },
   { letter: 'ח', name: 'Chet', sound: 'ch', image: '🍞', description: 'Like "Ch" in Bread (Lechem)', hebrew: 'ח' },
+  { letter: 'ט', name: 'Tet', sound: 't', image: '🧺', description: 'Like "T" in Basket (Tene)', hebrew: 'ט' },
+  { letter: 'י', name: 'Yod', sound: 'y', image: '🖐️', description: 'Like "Y" in Hand (Yad)', hebrew: 'י' },
+  { letter: 'כ', name: 'Kaf', sound: 'k', image: '⭐', description: 'Like "K" in Star (Kochav)', hebrew: 'כ' },
+  { letter: 'ל', name: 'Lamed', sound: 'l', image: '🦁', description: 'Like "L" in Lion (Lavi)', hebrew: 'ל' },
+  { letter: 'מ', name: 'Mem', sound: 'm', image: '💧', description: 'Like "M" in Water (Mayim)', hebrew: 'מ' },
+  { letter: 'נ', name: 'Nun', sound: 'n', image: '🐍', description: 'Like "N" in Snake (Nachash)', hebrew: 'נ' },
+  { letter: 'ס', name: 'Samech', sound: 's', image: '📚', description: 'Like "S" in Book (Sefer)', hebrew: 'ס' },
+  { letter: 'ע', name: 'Ayin', sound: 'silent', image: '👁️', description: 'Silent, like "Ayin" in Eye (Ayin)', hebrew: 'ע' },
+  { letter: 'פ', name: 'Peh', sound: 'p', image: '👄', description: 'Like "P" in Mouth (Peh)', hebrew: 'פ' },
+  { letter: 'צ', name: 'Tsadi', sound: 'ts', image: '🐦', description: 'Like "Ts" in Bird (Tsippor)', hebrew: 'צ' },
+  { letter: 'ק', name: 'Kof', sound: 'k', image: '🐒', description: 'Like "K" in Monkey (Kof)', hebrew: 'ק' },
+  { letter: 'ר', name: 'Resh', sound: 'r', image: '☀️', description: 'Like "R" in Sun (Shemesh)', hebrew: 'ר' },
+  { letter: 'ש', name: 'Shin', sound: 'sh', image: '🦷', description: 'Like "Sh" in Tooth (Shen)', hebrew: 'ש' },
+  { letter: 'ת', name: 'Tav', sound: 't', image: '🎁', description: 'Like "T" in Gift (Matana)', hebrew: 'ת' },
 ];
 
 const words: { hebrew: string; english: string; emoji: string; letters: string[] }[] = [
@@ -177,6 +191,12 @@ const words: { hebrew: string; english: string; emoji: string; letters: string[]
   { hebrew: 'חתול', english: 'Cat', emoji: '🐱', letters: ['ח', 'ת', 'ו', 'ל'] },
   { hebrew: 'כלב', english: 'Dog', emoji: '🐶', letters: ['כ', 'ל', 'ב'] },
   { hebrew: 'ספר', english: 'Book', emoji: '📚', letters: ['ס', 'פ', 'ר'] },
+  { hebrew: 'בית', english: 'House', emoji: '🏠', letters: ['ב', 'י', 'ת'] },
+  { hebrew: 'ילד', english: 'Boy', emoji: '👦', letters: ['י', 'ל', 'ד'] },
+  { hebrew: 'ילדה', english: 'Girl', emoji: '👧', letters: ['י', 'ל', 'ד', 'ה'] },
+  { hebrew: 'אוכל', english: 'Food', emoji: '🍔', letters: ['א', 'ו', 'כ', 'ל'] },
+  { hebrew: 'שיר', english: 'Song', emoji: '🎶', letters: ['ש', 'י', 'ר'] },
+  { hebrew: 'פרח', english: 'Flower', emoji: '🌸', letters: ['פ', 'ר', 'ח'] },
 ];
 
 const numbers: { hebrew: string; english: string; value: number; emoji: string }[] = [
@@ -185,14 +205,14 @@ const numbers: { hebrew: string; english: string; value: number; emoji: string }
   { hebrew: 'שלוש', english: 'Three', value: 3, emoji: '3️⃣' },
   { hebrew: 'ארבע', english: 'Four', value: 4, emoji: '4️⃣' },
   { hebrew: 'חמש', english: 'Five', value: 5, emoji: '5️⃣' },
+  { hebrew: 'שש', english: 'Six', value: 6, emoji: '6️⃣' },
+  { hebrew: 'שבע', english: 'Seven', value: 7, emoji: '7️⃣' },
+  { hebrew: 'שמונה', english: 'Eight', value: 8, emoji: '8️⃣' },
+  { hebrew: 'תשע', english: 'Nine', value: 9, emoji: '9️⃣' },
+  { hebrew: 'עשר', english: 'Ten', value: 10, emoji: '🔟' },
 ];
 
-const tracingLetters: TracingLetter[] = [
-  { letter: 'א', hebrew: 'א', path: 'M 50 20 L 50 180 M 20 150 L 80 150' },
-  { letter: 'ב', hebrew: 'ב', path: 'M 20 20 L 80 20 L 80 180 L 20 180 L 20 100' },
-  { letter: 'ג', hebrew: 'ג', path: 'M 80 20 L 20 180 L 80 180' },
-  { letter: 'ד', hebrew: 'ד', path: 'M 20 20 L 80 20 L 80 180' },
-];
+// Tracing letters removed as per request.
 
 const achievements: Achievement[] = [
   { id: 'first-steps', name: 'First Steps', description: 'Complete your first lesson', icon: BookOpen, threshold: 1, rewardPoints: 10 },
@@ -210,7 +230,7 @@ const animalIcons = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '�
 export default function App() {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [view, setView] = useState<'profile-select' | 'main-dashboard' | 'learning-path' | 'games' | 'achievements' | 'rewards' | 'settings' | 'letter-match' | 'word-builder' | 'memory-game' | 'number-recognition' | 'tracing-game' | 'falling-letters' | 'puzzle-game' | 'shape-recognition' | 'coloring-redemption' | 'coloring-game' | 'profile-creation' | 'edit-profile' | 'level-up-animation' >('profile-select');
+  const [view, setView] = useState<'profile-select' | 'main-dashboard' | 'learning-path' | 'games' | 'achievements' | 'rewards' | 'settings' | 'letter-match' | 'word-builder' | 'memory-game' | 'number-recognition' | 'falling-letters' | 'puzzle-game' | 'shape-recognition' | 'coloring-redemption' | 'coloring-game' | 'profile-creation' | 'edit-profile' | 'level-up-animation' >('profile-select');
   const [newProfileName, setNewProfileName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState('🐶');
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
@@ -221,10 +241,10 @@ export default function App() {
   const [wordBuilderWord, setWordBuilderWord] = useState(0);
   const [memoryGameLevel, setMemoryGameLevel] = useState(0);
   const [numberRecognitionQuestion, setNumberRecognitionQuestion] = useState(0);
-  const [tracingGameLetter, setTracingGameLetter] = useState(0);
+  // const [tracingGameLetter, setTracingGameLetter] = useState(0); // Removed as game is disabled
   const [fallingLettersGameActive, setFallingLettersGameActive] = useState(false);
   const [fallingLettersScore, setFallingLettersScore] = useState(0);
-  const [fallingLettersCorrectLetter, setFallingLettersCorrectLetter] = useState('');
+  const [fallingLettersTargetLetter, setFallingLettersTargetLetter] = useState('');
   const [fallingLetters, setFallingLetters] = useState<FallingLetter[]>([]);
   const [puzzleGameWord, setPuzzleGameWord] = useState(0);
   const [shapeRecognitionLevel, setShapeRecognitionLevel] = useState(0);
@@ -255,7 +275,7 @@ export default function App() {
       setView('profile-select');
     } else if (view === 'learning-path' || view === 'games' || view === 'achievements' || view === 'rewards' || view === 'settings') {
       setView('main-dashboard');
-    } else if (view === 'letter-match' || view === 'word-builder' || view === 'memory-game' || view === 'number-recognition' || view === 'tracing-game' || view === 'falling-letters' || view === 'puzzle-game' || view === 'shape-recognition' || view === 'coloring-redemption') {
+    } else if (view === 'letter-match' || view === 'word-builder' || view === 'memory-game' || view === 'number-recognition' || view === 'falling-letters' || view === 'puzzle-game' || view === 'shape-recognition' || view === 'coloring-redemption') {
       setView('games');
     } else if (view === 'coloring-game') {
       setView('coloring-redemption');
@@ -282,9 +302,9 @@ export default function App() {
       setWordBuilderWord(currentProfile.gameProgress.wordBuilder || 0);
       setMemoryGameLevel(currentProfile.gameProgress.memoryGame || 0);
       setNumberRecognitionQuestion(currentProfile.gameProgress.numberRecognition || 0);
-      setTracingGameLetter(currentProfile.gameProgress.tracingGame || 0);
+      // setTracingGameLetter(currentProfile.gameProgress.tracingGame || 0); // Removed
       setFallingLettersScore(currentProfile.gameProgress.fallingLetters?.score || 0);
-      setFallingLettersCorrectLetter(currentProfile.gameProgress.fallingLetters?.targetLetter || '');
+      setFallingLettersTargetLetter(currentProfile.gameProgress.fallingLetters?.targetLetter || '');
       setPuzzleGameWord(currentProfile.gameProgress.puzzleGame || 0);
       setShapeRecognitionLevel(currentProfile.gameProgress.shapeRecognition?.level || 0);
       setShapeRecognitionQuestion(currentProfile.gameProgress.shapeRecognition?.question || 0);
@@ -294,7 +314,7 @@ export default function App() {
 
   useEffect(() => {
     // Prevent body scroll when a game is active
-    const isGameActive = ['letter-match', 'word-builder', 'memory-game', 'number-recognition', 'tracing-game', 'falling-letters', 'puzzle-game', 'shape-recognition', 'coloring-game'].includes(view);
+    const isGameActive = ['letter-match', 'word-builder', 'memory-game', 'number-recognition', 'falling-letters', 'puzzle-game', 'shape-recognition', 'coloring-game'].includes(view);
     preventBodyScroll(isGameActive);
   }, [view]);
 
@@ -453,7 +473,7 @@ export default function App() {
     setEditingProfile(null);
     setNewProfileName('');
     setSelectedAvatar('🐶');
-    setView('main-dashboard');
+    setView('main-dashboard'); // Redirect to home page
     toast({
       title: "Profile Updated!",
       description: `Your profile has been updated.`,
@@ -483,7 +503,7 @@ export default function App() {
     if (!currentProfile) return;
     const currentCard = alphabetCards[letterMatchQuestion];
     if (selectedLetter === currentCard.letter) {
-      addXp(10);
+      addXp(2); // Award 2 points
       const nextQuestion = letterMatchQuestion + 1;
       const isGameComplete = nextQuestion >= alphabetCards.length;
 
@@ -532,9 +552,11 @@ export default function App() {
       if (words[initialWordIndex]) {
         const targetWord = words[initialWordIndex];
         setBuiltWordLetters([]);
-        // Shuffle letters of the target word and add some random letters
-        const allLetters = [...new Set([...targetWord.letters, ...alphabetCards.map(c => c.letter)])];
-        const shuffledOptions = allLetters.sort(() => Math.random() - 0.5).slice(0, 8); // Max 8 options
+        // Generate options: all letters of the target word + 3 random distractors
+        const targetLetters = [...new Set(targetWord.letters)];
+        const allOtherLetters = alphabetCards.map(c => c.letter).filter(l => !targetLetters.includes(l));
+        const distractors = allOtherLetters.sort(() => Math.random() - 0.5).slice(0, 3);
+        const shuffledOptions = [...targetLetters, ...distractors].sort(() => Math.random() - 0.5);
         setWordBuilderOptions(shuffledOptions);
         setWordBuilderFeedback(null);
       }
@@ -555,7 +577,7 @@ export default function App() {
     const builtWord = builtWordLetters.join('');
 
     if (builtWord === targetWord.hebrew) {
-      addXp(15);
+      addXp(2); // Award 2 points
       setWordBuilderFeedback('correct');
       toast({
         title: "Correct!",
@@ -649,7 +671,7 @@ export default function App() {
 
       if (card1.hebrew === card2.hebrew) {
         // Match found
-        addXp(20);
+        addXp(2); // Award 2 points
         setMatchedPairs(prev => prev + 1);
         setMemoryCards(prev =>
           prev.map(card =>
@@ -726,7 +748,7 @@ export default function App() {
         const targetNumber = numbers[initialQuestion];
         const options = [targetNumber.value];
         while (options.length < 4) {
-          const randomNum = Math.floor(Math.random() * 5) + 1; // Numbers 1-5
+          const randomNum = Math.floor(Math.random() * 10) + 1; // Numbers 1-10
           if (!options.includes(randomNum)) {
             options.push(randomNum);
           }
@@ -742,7 +764,7 @@ export default function App() {
     const currentNumber = numbers[numberRecognitionQuestion];
 
     if (selectedNum === currentNumber.value) {
-      addXp(10);
+      addXp(2); // Award 2 points
       setNumberRecognitionFeedback('correct');
       toast({
         title: "Correct!",
@@ -784,183 +806,11 @@ export default function App() {
     }
   };
 
-  // Tracing Game
-  const tracingCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [isTracingDrawing, setIsTracingDrawing] = useState(false);
-  const [tracingPathProgress, setTracingPathProgress] = useState(0); // 0-100
-  const [tracingFeedback, setTracingFeedback] = useState<'correct' | 'incorrect' | null>(null);
-
-  useEffect(() => {
-    if (view === 'tracing-game') {
-      const initialLetter = currentProfile?.gameProgress.tracingGame || 0;
-      setTracingGameLetter(initialLetter);
-      if (tracingLetters[initialLetter]) {
-        const canvas = tracingCanvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw the letter outline
-        const currentLetter = tracingLetters[initialLetter];
-        ctx.strokeStyle = '#ccc';
-        ctx.lineWidth = 5;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        const path = new Path2D(currentLetter.path);
-        ctx.stroke(path);
-
-        setTracingPathProgress(0);
-        setTracingFeedback(null);
-      }
-    }
-  }, [view, currentProfile]); // Depend on currentProfile to load initial state
-
-  const getTracingCanvasCoordinates = (clientX: number, clientY: number) => {
-    const canvas = tracingCanvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-
-    const x = (clientX - rect.left) * scaleX;
-    const y = (clientY - rect.top) * scaleY;
-
-    return { x, y };
-  };
-
-  const startTracing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const canvas = tracingCanvasRef.current;
-    if (!canvas) return;
-
-    let clientX, clientY;
-    if ('touches' in e) {
-      if (e.touches.length === 0) return;
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    const { x, y } = getTracingCanvasCoordinates(clientX, clientY);
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.strokeStyle = '#6366f1'; // Purple color for tracing
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    setIsTracingDrawing(true);
-  };
-
-  const trace = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isTracingDrawing) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const canvas = tracingCanvasRef.current;
-    if (!canvas) return;
-
-    let clientX, clientY;
-    if ('touches' in e) {
-      if (e.touches.length === 0) return;
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    const { x, y } = getTracingCanvasCoordinates(clientX, clientY);
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.lineTo(x, y);
-    ctx.stroke();
-
-    // Simple progress calculation (can be improved with actual path matching)
-    setTracingPathProgress(prev => Math.min(prev + 0.5, 100));
-  };
-
-  const stopTracing = (e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setIsTracingDrawing(false);
-  };
-
-  const checkTracing = () => {
-    if (!currentProfile) return;
-    if (tracingPathProgress >= 90) { // Consider 90% as complete
-      addXp(15);
-      setTracingFeedback('correct');
-      toast({
-        title: "Great Tracing!",
-        description: `You traced "${tracingLetters[tracingGameLetter].hebrew}"!`,
-        variant: "success",
-      });
-      setTimeout(() => {
-        const nextLetter = tracingGameLetter + 1;
-        const isGameComplete = nextLetter >= tracingLetters.length;
-
-        updateProfile({
-          ...currentProfile,
-          gameProgress: {
-            ...currentProfile.gameProgress,
-            tracingGame: isGameComplete ? 0 : nextLetter, // Reset or advance
-          },
-        });
-
-        if (isGameComplete) {
-          toast({
-            title: "Game Complete!",
-            description: "You've mastered tracing all letters!",
-            variant: "default",
-          });
-          setView('games');
-        } else {
-          setTracingGameLetter(nextLetter);
-        }
-      }, 1500);
-    } else {
-      setTracingFeedback('incorrect');
-      toast({
-        title: "Keep Tracing!",
-        description: "You need to trace more of the letter.",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        setTracingFeedback(null);
-        // Optionally clear canvas and redraw outline for retry
-        const canvas = tracingCanvasRef.current;
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const currentLetter = tracingLetters[tracingGameLetter];
-            ctx.strokeStyle = '#ccc';
-            ctx.lineWidth = 5;
-            const path = new Path2D(currentLetter.path);
-            ctx.stroke(path);
-          }
-        }
-        setTracingPathProgress(0);
-      }, 1500);
-    }
-  };
+  // Tracing Game - Disabled as per request.
+  // const tracingCanvasRef = useRef<HTMLCanvasElement>(null);
+  // const [isTracingDrawing, setIsTracingDrawing] = useState(false);
+  // const [tracingPathProgress, setTracingPathProgress] = useState(0); // 0-100
+  // const [tracingFeedback, setTracingFeedback] = useState<'correct' | 'incorrect' | null>(null);
 
   // Falling Letters Game
   useEffect(() => {
@@ -968,7 +818,7 @@ export default function App() {
       const initialScore = currentProfile?.gameProgress.fallingLetters?.score || 0;
       const initialTargetLetter = currentProfile?.gameProgress.fallingLetters?.targetLetter || '';
       setFallingLettersScore(initialScore);
-      setFallingLettersCorrectLetter(initialTargetLetter);
+      setFallingLettersTargetLetter(initialTargetLetter);
       // If game was active, resume it
       if (initialTargetLetter) {
         setFallingLettersGameActive(true);
@@ -985,25 +835,44 @@ export default function App() {
             y: letter.y + letter.speed,
           })).filter(letter => letter.y < window.innerHeight); // Remove letters that fall off screen
 
-          // Add new letter if needed
-          if (newLetters.length < 5) { // Keep max 5 letters on screen
-            const randomLetter = alphabetCards[Math.floor(Math.random() * alphabetCards.length)];
-            newLetters.push({
-              id: Date.now() + Math.random(),
-              letter: randomLetter.letter,
-              hebrew: randomLetter.hebrew,
-              x: Math.random() * (window.innerWidth - 100) + 50,
-              y: -50, // Start above screen
-              speed: Math.random() * 2 + 1, // Random speed
-            });
+          // Ensure target letter is present and limit total letters to 4
+          const currentTargetLetter = fallingLettersTargetLetter || alphabetCards[Math.floor(Math.random() * alphabetCards.length)].letter;
+          const hasTarget = newLetters.some(l => l.letter === currentTargetLetter);
+
+          if (!hasTarget) {
+            const targetCard = alphabetCards.find(c => c.letter === currentTargetLetter);
+            if (targetCard) {
+              newLetters.push({
+                id: Date.now() + Math.random(),
+                letter: targetCard.letter,
+                hebrew: targetCard.hebrew,
+                x: Math.random() * (window.innerWidth - 100) + 50,
+                y: -50,
+                speed: Math.random() * 3 + 2, // Faster speed
+              });
+            }
           }
-          return newLetters;
+
+          while (newLetters.length < 4) { // Keep max 4 letters on screen (1 target, 3 distractors)
+            const randomLetter = alphabetCards[Math.floor(Math.random() * alphabetCards.length)];
+            if (!newLetters.some(l => l.letter === randomLetter.letter)) { // Avoid duplicates
+              newLetters.push({
+                id: Date.now() + Math.random(),
+                letter: randomLetter.letter,
+                hebrew: randomLetter.hebrew,
+                x: Math.random() * (window.innerWidth - 100) + 50,
+                y: -50, // Start above screen
+                speed: Math.random() * 3 + 2, // Faster speed
+              });
+            }
+          }
+          return newLetters.slice(-4); // Ensure max 4 letters
         });
       }, 50); // Update every 50ms
 
       return () => clearInterval(interval);
     }
-  }, [fallingLettersGameActive, view]);
+  }, [fallingLettersGameActive, view, fallingLettersTargetLetter]);
 
   const startGame = () => {
     setFallingLettersGameActive(true);
@@ -1014,7 +883,7 @@ export default function App() {
 
   const pickNewFallingLetterTarget = () => {
     const target = alphabetCards[Math.floor(Math.random() * alphabetCards.length)];
-    setFallingLettersCorrectLetter(target.letter);
+    setFallingLettersTargetLetter(target.letter);
     playHebrewSound(target.hebrew);
 
     // Update profile progress
@@ -1030,8 +899,8 @@ export default function App() {
   const handleFallingLetterClick = (clickedLetter: FallingLetter) => {
     if (!currentProfile || !fallingLettersGameActive) return;
 
-    if (clickedLetter.letter === fallingLettersCorrectLetter) {
-      addXp(5);
+    if (clickedLetter.letter === fallingLettersTargetLetter) {
+      addXp(2); // Award 2 points
       const newScore = fallingLettersScore + 1;
       setFallingLettersScore(newScore);
       setFallingLetters(prev => prev.filter(l => l.id !== clickedLetter.id)); // Remove clicked letter
@@ -1054,6 +923,7 @@ export default function App() {
   // Puzzle Game
   const [puzzlePieces, setPuzzlePieces] = useState<PuzzlePiece[]>([]);
   const [puzzleFeedback, setPuzzleFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [firstClickedPieceIndex, setFirstClickedPieceIndex] = useState<number | null>(null); // For click-to-swap
 
   useEffect(() => {
     if (view === 'puzzle-game') {
@@ -1078,13 +948,27 @@ export default function App() {
 
     setPuzzlePieces(pieces.sort(() => Math.random() - 0.5).map((p, i) => ({ ...p, position: i })));
     setPuzzleFeedback(null);
+    setFirstClickedPieceIndex(null); // Reset clicked piece
   };
 
-  const movePuzzlePiece = (fromIndex: number, toIndex: number) => {
-    const newPieces = [...puzzlePieces];
-    const [movedPiece] = newPieces.splice(fromIndex, 1);
-    newPieces.splice(toIndex, 0, movedPiece);
-    setPuzzlePieces(newPieces.map((p, i) => ({ ...p, position: i }))); // Update positions
+  const handlePuzzlePieceClick = (clickedIndex: number) => {
+    if (puzzleFeedback) return; // Prevent interaction during feedback
+
+    if (firstClickedPieceIndex === null) {
+      // First click: select this piece
+      setFirstClickedPieceIndex(clickedIndex);
+    } else {
+      // Second click: swap with the first clicked piece
+      const newPieces = [...puzzlePieces];
+      const piece1 = newPieces[firstClickedPieceIndex];
+      const piece2 = newPieces[clickedIndex];
+
+      newPieces[firstClickedPieceIndex] = { ...piece2, position: firstClickedPieceIndex };
+      newPieces[clickedIndex] = { ...piece1, position: clickedIndex };
+
+      setPuzzlePieces(newPieces);
+      setFirstClickedPieceIndex(null); // Reset for next swap
+    }
   };
 
   const checkWord = () => {
@@ -1092,7 +976,7 @@ export default function App() {
     const isCorrect = puzzlePieces.every((piece, index) => piece.correctPosition === index);
 
     if (isCorrect) {
-      addXp(20);
+      addXp(2); // Award 2 points
       setPuzzleFeedback('correct');
       toast({
         title: "Puzzle Solved!",
@@ -1584,7 +1468,7 @@ export default function App() {
           { id: 'word-builder', title: 'Word Builder', icon: Lightbulb, description: 'Build Hebrew words letter by letter.', progress: currentProfile.gameProgress.wordBuilder !== undefined ? (currentProfile.gameProgress.wordBuilder / words.length) * 100 : 0, locked: false },
           { id: 'memory-game', title: 'Memory Game', icon: Brain, description: 'Find matching pairs of Hebrew words.', progress: currentProfile.gameProgress.memoryGame !== undefined ? (currentProfile.gameProgress.memoryGame / 3) * 100 : 0, locked: false }, // Assuming 3 levels
           { id: 'number-recognition', title: 'Number Recognition', icon: Zap, description: 'Identify Hebrew numbers.', progress: currentProfile.gameProgress.numberRecognition !== undefined ? (currentProfile.gameProgress.numberRecognition / numbers.length) * 100 : 0, locked: false },
-          { id: 'tracing-game', title: 'Letter Tracing', icon: Fingerprint, description: 'Practice writing Hebrew letters.', progress: currentProfile.gameProgress.tracingGame !== undefined ? (currentProfile.gameProgress.tracingGame / tracingLetters.length) * 100 : 0, locked: false },
+          // { id: 'tracing-game', title: 'Letter Tracing', icon: Fingerprint, description: 'Practice writing Hebrew letters.', progress: currentProfile.gameProgress.tracingGame !== undefined ? (currentProfile.gameProgress.tracingGame / tracingLetters.length) * 100 : 0, locked: false }, // Disabled
           { id: 'falling-letters', title: 'Falling Letters', icon: Hand, description: 'Catch the correct Hebrew letters.', progress: currentProfile.gameProgress.fallingLetters?.score !== undefined ? (currentProfile.gameProgress.fallingLetters.score / 20) * 100 : 0, locked: false }, // Assuming max score of 20 for progress
           { id: 'puzzle-game', title: 'Word Puzzle', icon: Puzzle, description: 'Arrange letters to form Hebrew words.', progress: currentProfile.gameProgress.puzzleGame !== undefined ? (currentProfile.gameProgress.puzzleGame / words.length) * 100 : 0, locked: false },
           { id: 'shape-recognition', title: 'Shape Recognition', icon: Shapes, description: 'Learn Hebrew names for shapes.', progress: currentProfile.gameProgress.shapeRecognition?.question !== undefined ? (currentProfile.gameProgress.shapeRecognition.question / 8) * 100 : 0, locked: false }, // Assuming 8 questions per level
@@ -1999,7 +1883,7 @@ export default function App() {
 
             <Card className="mb-8 p-8 text-center">
               <CardTitle className="text-xl font-bold text-gray-800 mb-4">
-                What number is this?
+                What number is "{currentNumberRecognition.hebrew}"?
               </CardTitle>
               <div className="text-6xl mb-4">{currentNumberRecognition.emoji}</div>
               <p className="text-lg text-gray-600 mb-6">{currentNumberRecognition.english}</p>
@@ -2052,90 +1936,7 @@ export default function App() {
           </div>
         );
 
-      case 'tracing-game':
-        if (!currentProfile) return null;
-        const currentTracingLetter = tracingLetters[tracingGameLetter];
-
-        return (
-          <div className="min-h-screen bg-gradient-to-b from-red-50 to-pink-50 p-4 safe-area-inset">
-            <div className="flex items-center justify-between mb-6 safe-area-top">
-              <HapticButton
-                variant="outline"
-                onClick={() => setView('games')}
-                className="p-2"
-                hapticType="light"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </HapticButton>
-              <h1 className="text-2xl font-bold text-gray-800">Letter Tracing ✍️</h1>
-              <div className="w-10" />
-            </div>
-
-            <Card className="mb-8 p-8 text-center">
-              <CardTitle className="text-xl font-bold text-gray-800 mb-4">
-                Trace the letter "{currentTracingLetter.hebrew}"
-              </CardTitle>
-              <div className="text-6xl mb-4">{currentTracingLetter.letter}</div>
-
-              {/* Big Sound Button */}
-              <HapticButton
-                variant="outline"
-                onClick={() => playHebrewSound(currentTracingLetter.hebrew)}
-                className="w-20 h-20 rounded-full mx-auto"
-                hapticType="light"
-              >
-                <Volume2 className="w-10 h-10" />
-              </HapticButton>
-            </Card>
-
-            <div className="space-y-4">
-              <Card className="p-4">
-                <canvas
-                  ref={tracingCanvasRef}
-                  width={300}
-                  height={200}
-                  className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair bg-white touch-none"
-                  onMouseDown={startTracing}
-                  onMouseMove={trace}
-                  onMouseUp={stopTracing}
-                  onMouseLeave={stopTracing}
-                  onTouchStart={startTracing}
-                  onTouchMove={trace}
-                  onTouchEnd={stopTracing}
-                />
-              </Card>
-
-              {tracingFeedback && (
-                <div className={`p-4 rounded-lg text-center text-white font-bold text-lg ${
-                  tracingFeedback === 'correct' ? 'bg-green-500' : 'bg-red-500'
-                } animate-pulse`}>
-                  {tracingFeedback === 'correct' ? 'Perfect! 🎉' : 'Keep going! 💪'}
-                </div>
-              )}
-
-              <HapticButton
-                onClick={checkTracing}
-                disabled={tracingPathProgress < 50} // Require some progress to check
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
-                hapticType="success"
-              >
-                Check Tracing
-              </HapticButton>
-            </div>
-
-            <div className="text-center mt-6 safe-area-bottom">
-              <div className="text-sm text-gray-600 mb-2">
-                Progress: {tracingPathProgress.toFixed(0)}%
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className="bg-pink-500 h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${tracingPathProgress}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        );
+      // Tracing Game removed from here.
 
       case 'falling-letters':
         if (!currentProfile) return null;
@@ -2156,14 +1957,14 @@ export default function App() {
 
             <Card className="mb-8 p-8 text-center">
               <CardTitle className="text-xl font-bold text-gray-800 mb-4">
-                Catch the letter: "{fallingLettersCorrectLetter}"
+                Catch the letter: "{fallingLettersTargetLetter}"
               </CardTitle>
               <p className="text-lg text-gray-600 mb-6">Score: {fallingLettersScore}</p>
 
               {/* Big Sound Button */}
               <HapticButton
                 variant="outline"
-                onClick={() => playHebrewSound(alphabetCards.find(a => a.letter === fallingLettersCorrectLetter)?.hebrew || '')}
+                onClick={() => playHebrewSound(alphabetCards.find(a => a.letter === fallingLettersTargetLetter)?.hebrew || '')}
                 className="w-20 h-20 rounded-full mx-auto"
                 hapticType="light"
               >
@@ -2246,24 +2047,8 @@ export default function App() {
                   {puzzlePieces.map((piece, index) => (
                     <HapticButton
                       key={piece.id}
-                      variant="outline"
-                      onClick={() => {
-                        // Simple swap logic: if two are selected, swap them
-                        const selected = puzzlePieces.filter(p => p.position === index);
-                        if (selected.length === 0) {
-                          // Select this piece
-                          // For simplicity, let's just allow dragging or simple clicks
-                          // For a full drag-and-drop, dnd-kit would be used here.
-                          // For now, let's implement a simple swap with two clicks.
-                          // This would require more state to track first clicked piece.
-                          // For now, just a placeholder for interaction.
-                          toast({
-                            title: "Click two letters to swap",
-                            description: "This feature needs more advanced logic.",
-                            variant: "default",
-                          });
-                        }
-                      }}
+                      variant={firstClickedPieceIndex === index ? "default" : "outline"}
+                      onClick={() => handlePuzzlePieceClick(index)}
                       className="h-20 w-20 flex flex-col items-center justify-center text-3xl font-bold"
                       hapticType="light"
                     >
@@ -2322,7 +2107,7 @@ export default function App() {
             question={shapeRecognitionQuestion}
             onBack={() => setView('games')}
             onCorrect={() => {
-              addXp(10);
+              addXp(2); // Award 2 points
               const nextQuestion = shapeRecognitionQuestion + 1;
               const isLevelComplete = nextQuestion >= 8; // 8 questions per level
 

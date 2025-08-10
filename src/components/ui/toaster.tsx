@@ -1,9 +1,9 @@
 "use client"
 
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "@/hooks/use-toast"
 import {
   Toast,
-  ToastAction, // Import ToastAction as a component
+  ToastClose,
   ToastDescription,
   ToastProvider,
   ToastTitle,
@@ -11,20 +11,21 @@ import {
 } from "@/components/ui/toast"
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts } = toast()
 
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
-          <Toast key={id} {...props} id={id}>
+          <Toast key={id} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action} {/* action is already a ReactNode (ToastAction component) */}
+            {action}
+            <ToastClose />
           </Toast>
         )
       })}
