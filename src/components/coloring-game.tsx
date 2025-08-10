@@ -178,12 +178,33 @@ const coloringSheets = [
 
 export default function ColoringGame({ sheetId, title, onBack, onSave }: ColoringGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [selectedColor, setSelectedColor] = useState<string>('#ff0000');
   const [selectedTool, setSelectedTool] = useState<Tool>(tools[0]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [showTemplate, setShowTemplate] = useState(true);
+  const [canvasSize, setCanvasSize] = useState({ width: 400, height: 500 });
 
   const sheet = coloringSheets.find(s => s.id === sheetId) || coloringSheets[0];
+
+  // Update canvas size based on container
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth - 32; // Account for padding
+        const aspectRatio = 4/5; // 400:500 ratio
+        const newWidth = Math.min(containerWidth, 400);
+        const newHeight = newWidth / aspectRatio;
+        
+        setCanvasSize({ width: newWidth, height: newHeight });
+      }
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+    
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -191,6 +212,10 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Set canvas size
+    canvas.width = canvasSize.width;
+    canvas.height = canvasSize.height;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -203,13 +228,21 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
     if (showTemplate) {
       drawTemplate(ctx);
     }
-  }, [sheet, showTemplate]);
+  }, [sheet, showTemplate, canvasSize]);
 
   const drawTemplate = (ctx: CanvasRenderingContext2D) => {
     ctx.save();
     ctx.strokeStyle = '#cccccc';
     ctx.lineWidth = 2;
     ctx.fillStyle = 'transparent';
+
+    // Calculate scale factor based on canvas size
+    const scaleX = canvasSize.width / 400; // Original template width is 400
+    const scaleY = canvasSize.height / 500; // Original template height is 500
+    const scale = Math.min(scaleX, scaleY);
+
+    // Apply scaling
+    ctx.scale(scale, scale);
 
     sheet.template.elements.forEach(element => {
       ctx.save();
@@ -245,17 +278,42 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
       
       ctx.restore();
     });
+    
+    ctx.restore();
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getCanvasCoordinates = (clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    
+    return { x, y };
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let clientX, clientY;
+    if ('touches' in e) {
+      if (e.touches.length === 0) return;
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const { x, y } = getCanvasCoordinates(clientX, clientY);
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -263,14 +321,14 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.strokeStyle = selectedColor;
-    ctx.lineWidth = selectedTool.size;
+    ctx.lineWidth = selectedTool.size * (canvasSize.width / 400); // Scale brush size
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
     setIsDrawing(true);
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
     e.preventDefault();
     e.stopPropagation();
@@ -278,9 +336,17 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let clientX, clientY;
+    if ('touches' in e) {
+      if (e.touches.length === 0) return;
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const { x, y } = getCanvasCoordinates(clientX, clientY);
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -289,7 +355,7 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
     ctx.stroke();
   };
 
-  const stopDrawing = (e?: React.MouseEvent<HTMLCanvasElement>) => {
+  const stopDrawing = (e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -371,39 +437,24 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
         </div>
 
         {/* Canvas */}
-        <Card className="mb-6 p-4">
+        <Card className="mb-6 p-4" ref={containerRef}>
           <canvas
             ref={canvasRef}
-            width={400}
-            height={500}
+            width={canvasSize.width}
+            height={canvasSize.height}
             className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair bg-white touch-none"
+            style={{ 
+              maxWidth: '100%',
+              height: 'auto',
+              aspectRatio: '4/5'
+            }}
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              const touch = e.touches[0];
-              const mouseEvent = new MouseEvent('mousedown', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-              });
-              canvasRef.current?.dispatchEvent(mouseEvent);
-            }}
-            onTouchMove={(e) => {
-              e.preventDefault();
-              const touch = e.touches[0];
-              const mouseEvent = new MouseEvent('mousemove', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-              });
-              canvasRef.current?.dispatchEvent(mouseEvent);
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              const mouseEvent = new MouseEvent('mouseup', {});
-              canvasRef.current?.dispatchEvent(mouseEvent);
-            }}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
           />
         </Card>
 
@@ -455,14 +506,14 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
         </Card>
 
         {/* Actions */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <HapticButton
             variant="outline"
             onClick={() => setShowTemplate(!showTemplate)}
             className="h-12"
             hapticType="light"
           >
-            {showTemplate ? 'Hide Template' : 'Show Template'}
+            {showTemplate ? '👁️ Hide Template' : '👁️ Show Template'}
           </HapticButton>
           
           <HapticButton
