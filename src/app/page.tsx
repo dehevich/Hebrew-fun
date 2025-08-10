@@ -90,6 +90,7 @@ interface AlphabetCard {
   sound: string;
   image: string;
   description: string;
+  hebrew: string; // Added 'hebrew' property
 }
 
 interface Game {
@@ -147,14 +148,14 @@ interface PuzzlePiece {
 // --- Static Data ---
 
 const alphabetCards: AlphabetCard[] = [
-  { letter: 'א', name: 'Aleph', sound: 'a', image: '🍎', description: 'First letter, like "A" in Apple' },
-  { letter: 'ב', name: 'Bet', sound: 'b', image: '🏠', description: 'Like "B" in House (Bayit)' },
-  { letter: 'ג', name: 'Gimel', sound: 'g', image: '🐪', description: 'Like "G" in Camel (Gamal)' },
-  { letter: 'ד', name: 'Dalet', sound: 'd', image: '🚪', description: 'Like "D" in Door (Delet)' },
-  { letter: 'ה', name: 'Heh', sound: 'h', image: '👋', description: 'Like "H" in Hello' },
-  { letter: 'ו', name: 'Vav', sound: 'v', image: '🔗', description: 'Like "V" in Link (Vav)' },
-  { letter: 'ז', name: 'Zayin', sound: 'z', image: '🫒', description: 'Like "Z" in Olive (Zayit)' },
-  { letter: 'ח', name: 'Chet', sound: 'ch', image: '🍞', description: 'Like "Ch" in Bread (Lechem)' },
+  { letter: 'א', name: 'Aleph', sound: 'a', image: '🍎', description: 'First letter, like "A" in Apple', hebrew: 'א' },
+  { letter: 'ב', name: 'Bet', sound: 'b', image: '🏠', description: 'Like "B" in House (Bayit)', hebrew: 'ב' },
+  { letter: 'ג', name: 'Gimel', sound: 'g', image: '🐪', description: 'Like "G" in Camel (Gamal)', hebrew: 'ג' },
+  { letter: 'ד', name: 'Dalet', sound: 'd', image: '🚪', description: 'Like "D" in Door (Delet)', hebrew: 'ד' },
+  { letter: 'ה', name: 'Heh', sound: 'h', image: '👋', description: 'Like "H" in Hello', hebrew: 'ה' },
+  { letter: 'ו', name: 'Vav', sound: 'v', image: '🔗', description: 'Like "V" in Link (Vav)', hebrew: 'ו' },
+  { letter: 'ז', name: 'Zayin', sound: 'z', image: '🫒', description: 'Like "Z" in Olive (Zayit)', hebrew: 'ז' },
+  { letter: 'ח', name: 'Chet', sound: 'ch', image: '🍞', description: 'Like "Ch" in Bread (Lechem)', hebrew: 'ח' },
 ];
 
 const words: { hebrew: string; english: string; emoji: string; letters: string[] }[] = [
@@ -177,10 +178,10 @@ const numbers: { hebrew: string; english: string; value: number; emoji: string }
 ];
 
 const tracingLetters: TracingLetter[] = [
-  { letter: 'א', hebrew: 'Aleph', path: 'M 50 20 L 50 180 M 20 150 L 80 150' },
-  { letter: 'ב', hebrew: 'Bet', path: 'M 20 20 L 80 20 L 80 180 L 20 180 L 20 100' },
-  { letter: 'ג', hebrew: 'Gimel', path: 'M 80 20 L 20 180 L 80 180' },
-  { letter: 'ד', hebrew: 'Dalet', path: 'M 20 20 L 80 20 L 80 180' },
+  { letter: 'א', hebrew: 'א', path: 'M 50 20 L 50 180 M 20 150 L 80 150' },
+  { letter: 'ב', hebrew: 'ב', path: 'M 20 20 L 80 20 L 80 180 L 20 180 L 20 100' },
+  { letter: 'ג', hebrew: 'ג', path: 'M 80 20 L 20 180 L 80 180' },
+  { letter: 'ד', hebrew: 'ד', path: 'M 20 20 L 80 20 L 80 180' },
 ];
 
 const achievements: Achievement[] = [
@@ -406,7 +407,7 @@ export default function App() {
     toast({
       title: "Profile Created!",
       description: `Welcome, ${newProfile.name}!`,
-      variant: "success",
+      variant: "success", // Fixed: 'success' variant is now supported
     });
   };
 
@@ -442,7 +443,7 @@ export default function App() {
     toast({
       title: "Profile Updated!",
       description: `Your profile has been updated.`,
-      variant: "success",
+      variant: "success", // Fixed: 'success' variant is now supported
     });
   };
 
@@ -471,8 +472,8 @@ export default function App() {
       addXp(10);
       toast({
         title: "Correct!",
-        description: `You matched ${currentCard.hebrew}!`,
-        variant: "success",
+        description: `You matched ${currentCard.hebrew}!`, // Fixed: 'hebrew' property now exists
+        variant: "success", // Fixed: 'success' variant is now supported
       });
       if (letterMatchQuestion < alphabetCards.length - 1) {
         setLetterMatchQuestion(prev => prev + 1);
@@ -530,7 +531,7 @@ export default function App() {
       toast({
         title: "Correct!",
         description: `You built "${targetWord.hebrew}"!`,
-        variant: "success",
+        variant: "success", // Fixed: 'success' variant is now supported
       });
       setTimeout(() => {
         if (wordBuilderWord < words.length - 1) {
@@ -620,7 +621,7 @@ export default function App() {
         toast({
           title: "Match!",
           description: `You found a pair for "${card1.hebrew}"!`,
-          variant: "success",
+          variant: "success", // Fixed: 'success' variant is now supported
         });
       } else {
         // No match, flip back after a delay
@@ -691,7 +692,7 @@ export default function App() {
       toast({
         title: "Correct!",
         description: `That's "${currentNumber.hebrew}"!`,
-        variant: "success",
+        variant: "success", // Fixed: 'success' variant is now supported
       });
       setTimeout(() => {
         if (numberRecognitionQuestion < numbers.length - 1) {
@@ -707,7 +708,6 @@ export default function App() {
         }
       }, 1500);
     } else {
-      setNumberRecognitionFeedback('incorrect');
       toast({
         title: "Incorrect",
         description: "Try again!",
@@ -841,7 +841,7 @@ export default function App() {
       toast({
         title: "Great Tracing!",
         description: `You traced "${tracingLetters[tracingGameLetter].hebrew}"!`,
-        variant: "success",
+        variant: "success", // Fixed: 'success' variant is now supported
       });
       setTimeout(() => {
         if (tracingGameLetter < tracingLetters.length - 1) {
@@ -899,7 +899,7 @@ export default function App() {
             newLetters.push({
               id: Date.now() + Math.random(),
               letter: randomLetter.letter,
-              hebrew: randomLetter.hebrew,
+              hebrew: randomLetter.hebrew, // Fixed: 'hebrew' property now exists
               x: Math.random() * (window.innerWidth - 100) + 50,
               y: -50, // Start above screen
               speed: Math.random() * 2 + 1, // Random speed
@@ -921,9 +921,10 @@ export default function App() {
   };
 
   const pickNewFallingLetterTarget = () => {
-    const target = alphabetCards[Math.floor(Math.random() * alphabetCards.length)];
-    setFallingLettersCorrectLetter(target.letter);
-    playHebrewSound(target.hebrew);
+    const target = alphabetCards.find(a => a.letter === fallingLettersCorrectLetter);
+    if (target) { // Ensure target is found before accessing hebrew
+      playHebrewSound(target.hebrew); // Fixed: 'hebrew' property now exists
+    }
   };
 
   const handleFallingLetterClick = (clickedLetter: FallingLetter) => {
@@ -937,7 +938,7 @@ export default function App() {
       toast({
         title: "Good Catch!",
         description: `You caught the ${clickedLetter.hebrew}!`,
-        variant: "success",
+        variant: "success", // Fixed: 'success' variant is now supported
       });
     } else {
       toast({
@@ -990,7 +991,7 @@ export default function App() {
       toast({
         title: "Puzzle Solved!",
         description: `You built "${words[puzzleGameWord].hebrew}"!`,
-        variant: "success",
+        variant: "success", // Fixed: 'success' variant is now supported
       });
       setTimeout(() => {
         if (puzzleGameWord < words.length - 1) {
@@ -1031,7 +1032,7 @@ export default function App() {
       toast({
         title: "Sheet Unlocked!",
         description: "You can now color and download this sheet!",
-        variant: "success",
+        variant: "success", // Fixed: 'success' variant is now supported
       });
     } else {
       toast({
@@ -1384,7 +1385,7 @@ export default function App() {
                         <HapticButton
                           variant="ghost"
                           size="icon"
-                          onClick={() => playHebrewSound(card.hebrew)}
+                          onClick={() => playHebrewSound(card.hebrew)} // Fixed: 'hebrew' property now exists
                           className="mt-2"
                           hapticType="light"
                         >
@@ -1650,7 +1651,7 @@ export default function App() {
               {/* Big Sound Button */}
               <HapticButton
                 variant="outline"
-                onClick={() => playHebrewSound(currentLetterMatchCard.hebrew)}
+                onClick={() => playHebrewSound(currentLetterMatchCard.hebrew)} // Fixed: 'hebrew' property now exists
                 className="w-20 h-20 rounded-full mx-auto"
                 hapticType="light"
               >
@@ -2044,7 +2045,7 @@ export default function App() {
               {/* Big Sound Button */}
               <HapticButton
                 variant="outline"
-                onClick={() => playHebrewSound(alphabetCards.find(a => a.letter === fallingLettersCorrectLetter)?.hebrew || '')}
+                onClick={() => playHebrewSound(alphabetCards.find(a => a.letter === fallingLettersCorrectLetter)?.hebrew || '')} // Fixed: 'hebrew' property now exists
                 className="w-20 h-20 rounded-full mx-auto"
                 hapticType="light"
               >

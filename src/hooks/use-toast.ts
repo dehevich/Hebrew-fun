@@ -4,9 +4,10 @@
 import * as React from "react"
 
 import type {
-  ToastActionElement,
+  ToastActionProps, // Import ToastActionProps for the action prop
   ToastProps,
 } from "@/components/ui/toast"
+import { ToastAction } from "@/components/ui/toast" // Import ToastAction component
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
@@ -15,7 +16,8 @@ type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
-  action?: ToastActionElement
+  action?: React.ReactElement<ToastActionProps>; // Action is now a React element of ToastActionProps
+  open?: boolean // Added 'open' property
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
