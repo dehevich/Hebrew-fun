@@ -41,6 +41,7 @@ const tools: Tool[] = [
   { name: 'Marker', icon: '🖊️', size: 8 },
   { name: 'Brush', icon: '🖌️', size: 12 },
   { name: 'Sponge', icon: '🧽', size: 20 },
+  { name: 'Eraser', icon: '🧹', size: 15 },
 ];
 
 const coloringSheets = [
@@ -320,7 +321,15 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
 
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.strokeStyle = selectedColor;
+    
+    if (selectedTool.name === 'Eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.strokeStyle = 'rgba(0,0,0,1)';
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = selectedColor;
+    }
+    
     ctx.lineWidth = selectedTool.size * (canvasSize.width / 400); // Scale brush size
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -350,6 +359,12 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    if (selectedTool.name === 'Eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+    }
 
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -436,74 +451,82 @@ export default function ColoringGame({ sheetId, title, onBack, onSave }: Colorin
           </div>
         </div>
 
-        {/* Canvas */}
-        <Card className="mb-6 p-4" ref={containerRef}>
-          <canvas
-            ref={canvasRef}
-            width={canvasSize.width}
-            height={canvasSize.height}
-            className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair bg-white touch-none"
-            style={{ 
-              maxWidth: '100%',
-              height: 'auto',
-              aspectRatio: '4/5'
-            }}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-          />
-        </Card>
+        {/* Main Content Area */}
+        <div className="flex flex-col lg:flex-row gap-6 mb-6">
+          {/* Canvas - Left Side */}
+          <div className="flex-1">
+            <Card className="p-4" ref={containerRef}>
+              <canvas
+                ref={canvasRef}
+                width={canvasSize.width}
+                height={canvasSize.height}
+                className="w-full border-2 border-gray-300 rounded-lg cursor-crosshair bg-white touch-none"
+                style={{ 
+                  maxWidth: '100%',
+                  height: 'auto',
+                  aspectRatio: '4/5'
+                }}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+              />
+            </Card>
+          </div>
 
-        {/* Tools */}
-        <Card className="mb-6 p-4">
-          <CardHeader>
-            <CardTitle className="text-lg">🛠️ Tools</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-4 gap-3">
-              {tools.map((tool) => (
-                <HapticButton
-                  key={tool.name}
-                  variant={selectedTool.name === tool.name ? "default" : "outline"}
-                  onClick={() => setSelectedTool(tool)}
-                  className="h-16 text-2xl"
-                  hapticType="light"
-                >
-                  {tool.icon}
-                </HapticButton>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+          {/* Tools and Colors - Right Side */}
+          <div className="w-full lg:w-80 space-y-4">
+            {/* Tools */}
+            <Card className="p-4">
+              <CardHeader>
+                <CardTitle className="text-lg">🛠️ Tools</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-2">
+                  {tools.map((tool) => (
+                    <HapticButton
+                      key={tool.name}
+                      variant={selectedTool.name === tool.name ? "default" : "outline"}
+                      onClick={() => setSelectedTool(tool)}
+                      className="h-14 text-xl"
+                      hapticType="light"
+                    >
+                      {tool.icon}
+                    </HapticButton>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Colors */}
-        <Card className="mb-6 p-4">
-          <CardHeader>
-            <CardTitle className="text-lg">🎨 Colors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-5 gap-3">
-              {colors.map((color) => (
-                <HapticButton
-                  key={color.name}
-                  variant={selectedColor === color.value ? "default" : "outline"}
-                  onClick={() => setSelectedColor(color.value)}
-                  className="h-16"
-                  style={{ backgroundColor: color.value }}
-                  hapticType="light"
-                >
-                  {selectedColor === color.value && (
-                    <div className="w-4 h-4 bg-white rounded-full mx-auto" />
-                  )}
-                </HapticButton>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+            {/* Colors */}
+            <Card className="p-4">
+              <CardHeader>
+                <CardTitle className="text-lg">🎨 Colors</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2">
+                  {colors.map((color) => (
+                    <HapticButton
+                      key={color.name}
+                      variant={selectedColor === color.value ? "default" : "outline"}
+                      onClick={() => setSelectedColor(color.value)}
+                      className="h-12"
+                      style={{ backgroundColor: color.value }}
+                      hapticType="light"
+                    >
+                      {selectedColor === color.value && (
+                        <div className="w-3 h-3 bg-white rounded-full mx-auto" />
+                      )}
+                    </HapticButton>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Actions */}
         <div className="grid grid-cols-2 gap-4 mb-4">

@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ColoringRedemption } from '@/components/coloring-redemption';
+import LevelUpAnimation from '@/components/level-up-animation';
+import ShapeRecognitionGame from '@/components/shape-recognition-game';
 import { useMobileBackButton } from '@/hooks/use-mobile-back-button';
 import { useTouchOptimization, preventBodyScroll } from '@/hooks/use-touch-optimization';
 import { Star, Trophy, BookOpen, Home, User, Settings, ArrowLeft, RotateCcw, Plus, Edit, Palette, Volume2 } from 'lucide-react';
@@ -91,8 +93,6 @@ const memoryCards = [
   { id: 4, hebrew: 'חבר', english: 'Friend', emoji: '🤝' },
   { id: 5, hebrew: 'בית', english: 'House', emoji: '🏠' },
   { id: 6, hebrew: 'מים', english: 'Water', emoji: '💧' },
-  { id: 7, hebrew: 'לחם', english: 'Bread', emoji: '🍞' },
-  { id: 8, hebrew: 'שמש', english: 'Sun', emoji: '☀️' },
 ];
 
 export default function HebrewLearningApp() {
@@ -105,6 +105,8 @@ export default function HebrewLearningApp() {
   const [selectedIcon, setSelectedIcon] = useState('🦁');
   const [activeTab, setActiveTab] = useState('home');
   const [currentGame, setCurrentGame] = useState<string | null>(null);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [levelUpInfo, setLevelUpInfo] = useState({ level: 1, pointsEarned: 0 });
 
   // Refs for touch optimization
   const appRef = useRef<HTMLDivElement>(null);
@@ -281,7 +283,14 @@ export default function HebrewLearningApp() {
   // Initialize letter match options when question changes
   useEffect(() => {
     if (currentGame === 'letter-match') {
-      const currentLetter = hebrewAlphabet[currentQuestion % hebrewAlphabet.length];
+      const level = currentProfile?.level || 1;
+      const baseIndex = currentQuestion % hebrewAlphabet.length;
+      
+      // For higher levels, use letters from later in the alphabet
+      const levelOffset = Math.floor((level - 1) / 5) * 5; // Every 5 levels, move forward 5 letters
+      const letterIndex = (baseIndex + levelOffset) % hebrewAlphabet.length;
+      const currentLetter = hebrewAlphabet[letterIndex];
+      
       const options = [currentLetter.pronunciation];
       
       // Add 3 random wrong options
@@ -297,7 +306,7 @@ export default function HebrewLearningApp() {
       setSelectedAnswer(null);
       setShowFeedback(null);
     }
-  }, [currentQuestion, currentGame]);
+  }, [currentQuestion, currentGame, currentProfile?.level]);
 
   // Initialize word builder options when question changes
   useEffect(() => {
@@ -326,7 +335,11 @@ export default function HebrewLearningApp() {
   useEffect(() => {
     if (currentGame === 'word-puzzle') {
       const currentWord = hebrewWords[currentQuestion % hebrewWords.length];
-      setPuzzlePieces(currentWord.letters.map((letter, index) => ({
+      
+      // Create shuffled letters
+      const shuffledLetters = [...currentWord.letters].sort(() => Math.random() - 0.5);
+      
+      setPuzzlePieces(shuffledLetters.map((letter, index) => ({
         letter,
         id: index,
         position: Math.random() > 0.5 ? 'top' : 'bottom'
@@ -491,7 +504,7 @@ export default function HebrewLearningApp() {
 
   const startGame = (gameKey: string) => {
     setCurrentGame(gameKey);
-    setGameLevel(1);
+    setGameLevel(currentProfile?.level || 1);
     setGameProgress(0);
     setCurrentQuestion(0);
   };
@@ -502,10 +515,38 @@ export default function HebrewLearningApp() {
     setGameProgress(prev => prev + 1);
     setCurrentQuestion(prev => prev + 1);
     
-    if (currentQuestion >= 7) { // 8 questions per level
-      if (gameLevel < 30) {
-        setGameLevel(prev => prev + 1);
+    let leveledUp = false;
+    let newLevel = currentProfile.level;
+    
+    if (gameProgress >= 7) { // 8 questions per level (0-7)
+      if (currentProfile.level < 30) {
+        newLevel = currentProfile.level + 1;
+        leveledUp = true;
+        
+        // Calculate points earned for this level
+        const pointsEarned = 50 + (currentProfile.level * 5); // More points for higher levels
+        
+        setLevelUpInfo({
+          level: newLevel,
+          pointsEarned: pointsEarned
+        });
+        
+        // Update profile level
+        const updatedProfile = {
+          ...currentProfile,
+          level: newLevel,
+          points: currentProfile.points + pointsEarned
+        };
+        
+        setCurrentProfile(updatedProfile);
+        setProfiles(prev => prev.map(p => p.id === currentProfile.id ? updatedProfile : p));
+        
+        // Reset progress for next level
+        setGameProgress(0);
         setCurrentQuestion(0);
+        
+        // Show level up animation
+        setShowLevelUp(true);
       } else {
         // Game completed
         setCurrentGame(null);
@@ -513,6 +554,10 @@ export default function HebrewLearningApp() {
     }
     
     updateProfileProgress(currentGame as keyof Profile['gameProgress'], 1);
+  };
+
+  const handleLevelUpComplete = () => {
+    setShowLevelUp(false);
   };
 
   const handleWrongAnswer = () => {
@@ -726,11 +771,11 @@ export default function HebrewLearningApp() {
         key: 'memory-game'
       },
       { 
-        title: 'Letter Tracing', 
-        icon: '✏️', 
-        description: 'Trace Hebrew letters with your finger', 
+        title: 'Shape Recognition', 
+        icon: '🔷', 
+        description: 'Learn Hebrew shapes and their meanings', 
         progress: currentProfile.gameProgress.letterTracing,
-        key: 'letter-tracing'
+        key: 'shape-recognition'
       },
       { 
         title: 'Letter Catch', 
@@ -840,7 +885,11 @@ export default function HebrewLearningApp() {
   };
 
   const renderLetterMatchGame = () => {
-    const currentLetter = hebrewAlphabet[currentQuestion % hebrewAlphabet.length];
+    const level = currentProfile?.level || 1;
+    const baseIndex = currentQuestion % hebrewAlphabet.length;
+    const levelOffset = Math.floor((level - 1) / 5) * 5;
+    const letterIndex = (baseIndex + levelOffset) % hebrewAlphabet.length;
+    const currentLetter = hebrewAlphabet[letterIndex];
 
     const handleAnswerSelect = (answer: string) => {
       setSelectedAnswer(answer);
@@ -1006,7 +1055,7 @@ export default function HebrewLearningApp() {
             </HapticButton>
 
             {/* Letter Slots */}
-            <div className="flex justify-center gap-2 mb-6">
+            <div className="flex justify-center gap-2 mb-6" dir="rtl">
               {currentWord.letters.map((_, index) => (
                 <div key={index} className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white">
                   {builtWordLetters[index] && (
@@ -1160,21 +1209,33 @@ export default function HebrewLearningApp() {
           )}
 
           {/* Game Board */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-3 gap-4 mb-8">
             {memoryGameCards.map((card) => (
               <Card 
                 key={card.id} 
-                className={`h-32 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 touch-target ${
+                className={`h-36 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 touch-target ${
                   card.isMatched ? 'opacity-50' : ''
                 }`}
                 onClick={() => !card.isMatched && handleCardClick(card.id)}
               >
-                <CardContent className="p-4 h-full flex flex-col items-center justify-center">
+                <CardContent className="p-3 h-full flex flex-col items-center justify-center">
                   {card.isFlipped || card.isMatched ? (
                     <>
-                      <div className="text-4xl mb-2">{card.emoji}</div>
-                      <div className="text-lg font-bold text-center">{card.hebrew}</div>
-                      <div className="text-sm text-gray-600 text-center">{card.english}</div>
+                      <div className="text-3xl mb-1">{card.emoji}</div>
+                      <div className="text-base font-bold text-center">{card.hebrew}</div>
+                      <div className="text-xs text-gray-600 text-center mb-1">{card.english}</div>
+                      <HapticButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playHebrewSound(card.hebrew);
+                        }}
+                        className="p-1 h-6 w-6"
+                        hapticType="light"
+                      >
+                        <Volume2 className="w-3 h-3" />
+                      </HapticButton>
                     </>
                   ) : (
                     <div className="text-4xl text-gray-400">?</div>
@@ -1838,10 +1899,15 @@ export default function HebrewLearningApp() {
     );
   }
 
-  if (currentGame === 'letter-tracing') {
+  if (currentGame === 'shape-recognition') {
     return (
       <div ref={appRef} className="min-h-screen bg-background">
-        {renderLetterTracingGame()}
+        <ShapeRecognitionGame
+          level={currentProfile?.level || 1}
+          question={currentQuestion}
+          onBack={() => setCurrentGame(null)}
+          onCorrect={handleCorrectAnswer}
+        />
       </div>
     );
   }
@@ -1881,6 +1947,14 @@ export default function HebrewLearningApp() {
   return (
     <div ref={appRef} className="min-h-screen bg-background">
       {renderHomeScreen()}
+      
+      {/* Level Up Animation */}
+      <LevelUpAnimation
+        show={showLevelUp}
+        level={levelUpInfo.level}
+        pointsEarned={levelUpInfo.pointsEarned}
+        onComplete={handleLevelUpComplete}
+      />
     </div>
   );
 }
