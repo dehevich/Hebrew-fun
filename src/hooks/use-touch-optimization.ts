@@ -11,7 +11,7 @@ interface TouchHandlers {
 }
 
 export const useTouchOptimization = (
-  elementRef: React.RefObject<HTMLElement>,
+  elementRef: React.RefObject<HTMLElement | null>, // Changed this line to allow null
   handlers: TouchHandlers = {},
   enabled: boolean = true
 ) => {
