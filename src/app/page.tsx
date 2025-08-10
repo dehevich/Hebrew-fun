@@ -313,60 +313,26 @@ export default function App() {
     }
   };
 
-  const addXp = (xp: number) => {
-    if (!currentProfile) return;
-
-    const newXp = currentProfile.xp + xp;
-    const newLevel = Math.floor(newXp / 100) + 1; // 100 XP per level
-
-    const updatedProfile = {
-      ...currentProfile,
-      xp: newXp,
-      level: newLevel,
-      points: currentProfile.points + xp, // Earn points equal to XP
-    };
-
-    if (newLevel > currentProfile.level) {
-      setLevelUpData({ level: newLevel, xpGained: xp });
-    }
-
-    updateProfile(updatedProfile);
-  };
-
-  const updateProfile = (updatedProfile: Profile) => {
-    setProfiles(prevProfiles =>
-      prevProfiles.map(p => (p.id === updatedProfile.id ? updatedProfile : p))
-    );
-    setCurrentProfile(updatedProfile);
-  };
-
-  const checkAchievements = useCallback((profile: Profile) => {
+  const checkAchievements = useCallback((profile: Profile): Profile => {
     let updatedProfile = { ...profile };
-    let pointsEarned = 0;
 
     achievements.forEach(achievement => {
       if (!updatedProfile.achievements.includes(achievement.id)) {
         let conditionMet = false;
         switch (achievement.id) {
           case 'first-steps':
-            // This achievement is typically triggered by completing the first lesson/game
-            // For now, let's assume it's met if XP > 0
             if (updatedProfile.xp > 0) conditionMet = true;
             break;
           case 'letter-master':
-            // This would require tracking learned letters, for now, use level
             if (updatedProfile.level >= 3) conditionMet = true;
             break;
           case 'word-wizard':
-            // This would require tracking mastered words, for now, use level
             if (updatedProfile.level >= 5) conditionMet = true;
             break;
           case 'game-guru':
-            // This would require tracking games played, for now, use level
             if (updatedProfile.level >= 7) conditionMet = true;
             break;
           case 'daily-learner':
-            // This requires daily streak logic
             if (updatedProfile.dailyStreak >= achievement.threshold) conditionMet = true;
             break;
           case 'point-collector':
@@ -377,7 +343,6 @@ export default function App() {
         if (conditionMet) {
           updatedProfile.achievements.push(achievement.id);
           updatedProfile.points += achievement.rewardPoints;
-          pointsEarned += achievement.rewardPoints;
           toast({
             title: "Achievement Unlocked!",
             description: `${achievement.name}: ${achievement.description} (+${achievement.rewardPoints} points)`,
@@ -386,17 +351,38 @@ export default function App() {
         }
       }
     });
+    return updatedProfile;
+  }, []);
 
-    if (pointsEarned > 0) {
-      updateProfile(updatedProfile);
-    }
-  }, [updateProfile]);
+  const addXp = (xp: number) => {
+    if (!currentProfile) return;
 
-  useEffect(() => {
-    if (currentProfile) {
-      checkAchievements(currentProfile);
+    const newXp = currentProfile.xp + xp;
+    const newLevel = Math.floor(newXp / 100) + 1; // 100 XP per level
+
+    let updatedProfile: Profile = {
+      ...currentProfile,
+      xp: newXp,
+      level: newLevel,
+      points: currentProfile.points + xp, // Earn points equal to XP
+    };
+
+    if (newLevel > currentProfile.level) {
+      setLevelUpData({ level: newLevel, xpGained: xp });
     }
-  }, [currentProfile, checkAchievements]);
+
+    // Check achievements with the *potentially* new profile state
+    updatedProfile = checkAchievements(updatedProfile);
+
+    updateProfile(updatedProfile);
+  };
+
+  const updateProfile = (updatedProfile: Profile) => {
+    setProfiles(prevProfiles =>
+      prevProfiles.map(p => (p.id === updatedProfile.id ? updatedProfile : p))
+    );
+    setCurrentProfile(updatedProfile);
+  };
 
   // --- Profile Management ---
 
