@@ -1,8 +1,8 @@
-import { Button, ButtonProps } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { useHaptics } from '@/hooks/use-haptics';
 import { forwardRef } from 'react';
 
-interface HapticButtonProps extends ButtonProps {
+interface HapticButtonProps extends React.ComponentProps<typeof Button> {
   hapticType?: 'light' | 'medium' | 'heavy' | 'success' | 'error' | 'warning';
 }
 
@@ -16,11 +16,7 @@ export const HapticButton = forwardRef<HTMLButtonElement, HapticButtonProps>(
     };
 
     return (
-      <Button
-        ref={ref}
-        onClick={handleClick}
-        {...props}
-      >
+      <Button ref={ref} onClick={handleClick} {...props}>
         {children}
       </Button>
     );
