@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next"; // Import Viewport type
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -30,13 +30,6 @@ export const metadata: Metadata = {
     title: "Hebrew Learning for Kids",
     description: "Interactive Hebrew learning app for children with games, tracing, and fun activities",
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: 'cover',
-  },
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
@@ -44,6 +37,15 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-title': 'Hebrew Learning',
     'format-detection': 'telephone=no',
   },
+};
+
+// Define viewport as a separate export
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
