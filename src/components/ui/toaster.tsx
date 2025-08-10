@@ -1,6 +1,6 @@
 "use client"
 
-import { toast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast" // Changed from 'toast' to 'use-toast'
 import {
   Toast,
   ToastClose,
@@ -11,7 +11,12 @@ import {
 } from "@/components/ui/toast"
 
 export function Toaster() {
-  const { toasts } = toast()
+  const { toasts } = useToast() // Changed to useToast hook
+
+  // Add a check to prevent rendering if toasts is undefined during SSR
+  if (!toasts) {
+    return null;
+  }
 
   return (
     <ToastProvider>
