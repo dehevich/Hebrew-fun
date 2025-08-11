@@ -313,9 +313,9 @@ export default function App() {
 
 
   useEffect(() => {
-    // Prevent body scroll when a game is active
-    const isGameActive = ['letter-match', 'word-builder', 'memory-game', 'number-recognition', 'falling-letters', 'puzzle-game', 'shape-recognition', 'coloring-game'].includes(view);
-    preventBodyScroll(isGameActive);
+    // Prevent body scroll when a game or edit profile is active
+    const isGameOrEditActive = ['letter-match', 'word-builder', 'memory-game', 'number-recognition', 'falling-letters', 'puzzle-game', 'shape-recognition', 'coloring-game', 'edit-profile'].includes(view);
+    preventBodyScroll(isGameOrEditActive);
   }, [view]);
 
   const playHebrewSound = (text: string) => {
@@ -814,19 +814,6 @@ export default function App() {
 
   // Falling Letters Game
   useEffect(() => {
-    if (view === 'falling-letters') {
-      const initialScore = currentProfile?.gameProgress.fallingLetters?.score || 0;
-      const initialTargetLetter = currentProfile?.gameProgress.fallingLetters?.targetLetter || '';
-      setFallingLettersScore(initialScore);
-      setFallingLettersTargetLetter(initialTargetLetter);
-      // If game was active, resume it
-      if (initialTargetLetter) {
-        setFallingLettersGameActive(true);
-      }
-    }
-  }, [view, currentProfile]);
-
-  useEffect(() => {
     if (fallingLettersGameActive) {
       const interval = setInterval(() => {
         setFallingLetters(prev => {
@@ -848,21 +835,23 @@ export default function App() {
                 hebrew: targetCard.hebrew,
                 x: Math.random() * (window.innerWidth - 100) + 50,
                 y: -50,
-                speed: Math.random() * 3 + 2, // Faster speed
+                speed: Math.random() * 5 + 3, // Faster speed
               });
             }
           }
 
-          while (newLetters.length < 4) { // Keep max 4 letters on screen (1 target, 3 distractors)
+          // Add distractors if needed, ensuring total is 4
+          while (newLetters.length < 4) {
             const randomLetter = alphabetCards[Math.floor(Math.random() * alphabetCards.length)];
-            if (!newLetters.some(l => l.letter === randomLetter.letter)) { // Avoid duplicates
+            // Ensure distractors are not the target letter and are unique among falling letters
+            if (randomLetter.letter !== currentTargetLetter && !newLetters.some(l => l.letter === randomLetter.letter)) {
               newLetters.push({
                 id: Date.now() + Math.random(),
                 letter: randomLetter.letter,
                 hebrew: randomLetter.hebrew,
                 x: Math.random() * (window.innerWidth - 100) + 50,
                 y: -50, // Start above screen
-                speed: Math.random() * 3 + 2, // Faster speed
+                speed: Math.random() * 5 + 3, // Faster speed
               });
             }
           }
@@ -872,7 +861,7 @@ export default function App() {
 
       return () => clearInterval(interval);
     }
-  }, [fallingLettersGameActive, view, fallingLettersTargetLetter]);
+  }, [fallingLettersGameActive, fallingLettersTargetLetter]);
 
   const startGame = () => {
     setFallingLettersGameActive(true);
@@ -946,7 +935,9 @@ export default function App() {
       correctPosition: index,
     }));
 
-    setPuzzlePieces(pieces.sort(() => Math.random() - 0.5).map((p, i) => ({ ...p, position: i })));
+    // Shuffle pieces to ensure they are in incorrect order initially
+    const shuffledPieces = [...pieces].sort(() => Math.random() - 0.5).map((p, i) => ({ ...p, position: i }));
+    setPuzzlePieces(shuffledPieces);
     setPuzzleFeedback(null);
     setFirstClickedPieceIndex(null); // Reset clicked piece
   };
@@ -963,6 +954,7 @@ export default function App() {
       const piece1 = newPieces[firstClickedPieceIndex];
       const piece2 = newPieces[clickedIndex];
 
+      // Perform the swap
       newPieces[firstClickedPieceIndex] = { ...piece2, position: firstClickedPieceIndex };
       newPieces[clickedIndex] = { ...piece1, position: clickedIndex };
 
@@ -973,7 +965,8 @@ export default function App() {
 
   const checkWord = () => {
     if (!currentProfile) return;
-    const isCorrect = puzzlePieces.every((piece, index) => piece.correctPosition === index);
+    // Check if the current order of pieces matches the correct order
+    const isCorrect = puzzlePieces.every((piece, index) => piece.hebrew === words[puzzleGameWord].letters[index]);
 
     if (isCorrect) {
       addXp(2); // Award 2 points
@@ -1079,9 +1072,8 @@ export default function App() {
                       className="flex flex-col items-center justify-center p-4 h-32 border-2 border-indigo-300 hover:border-indigo-500 transition-all duration-200"
                       hapticType="light"
                     >
-                      <Avatar className="w-16 h-16 mb-2">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/fun-emoji/svg?seed=${profile.avatar}`} alt={profile.name} />
-                        <AvatarFallback>{profile.name[0]}</AvatarFallback>
+                      <Avatar className="w-16 h-16 mb-2 text-4xl flex items-center justify-center">
+                        {profile.avatar}
                       </Avatar>
                       <span className="font-medium text-lg text-gray-800">{profile.name}</span>
                       <span className="text-sm text-gray-500">Level {profile.level}</span>
@@ -1232,9 +1224,8 @@ export default function App() {
                 <ArrowLeft className="w-5 h-5" />
               </HapticButton>
               <div className="flex items-center gap-2">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/fun-emoji/svg?seed=${currentProfile.avatar}`} alt={currentProfile.name} />
-                  <AvatarFallback>{currentProfile.name[0]}</AvatarFallback>
+                <Avatar className="w-10 h-10 text-2xl flex items-center justify-center">
+                  {currentProfile.avatar}
                 </Avatar>
                 <div>
                   <h1 className="text-xl font-bold text-gray-800">{currentProfile.name}</h1>
@@ -1622,7 +1613,12 @@ export default function App() {
       case 'letter-match':
         if (!currentProfile) return null;
         const currentLetterMatchCard = alphabetCards[letterMatchQuestion];
-        const letterMatchOptions = alphabetCards.map(card => card.letter).sort(() => Math.random() - 0.5);
+        
+        // Generate 4 unique options including the correct answer
+        const correctLetter = currentLetterMatchCard.letter;
+        const otherLetters = alphabetCards.filter(card => card.letter !== correctLetter).map(card => card.letter);
+        const shuffledOtherLetters = otherLetters.sort(() => 0.5 - Math.random());
+        const selectedOptions = [correctLetter, ...shuffledOtherLetters.slice(0, 3)].sort(() => 0.5 - Math.random());
 
         return (
           <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 p-4 safe-area-inset">
@@ -1642,31 +1638,31 @@ export default function App() {
               </div>
             </div>
 
-            <Card className="mb-6 p-4 text-center"> {/* Reduced padding */}
-              <CardTitle className="text-xl font-bold text-gray-800 mb-3"> {/* Adjusted margin */}
+            <Card className="mb-6 p-4 text-center max-w-md mx-auto"> {/* Adjusted max-width and margin */}
+              <CardTitle className="text-xl font-bold text-gray-800 mb-3">
                 Which letter makes the sound of "{currentLetterMatchCard.name}"?
               </CardTitle>
-              <div className="text-5xl mb-3">{currentLetterMatchCard.image}</div> {/* Adjusted font size */}
-              <p className="text-md text-gray-600 mb-4">{currentLetterMatchCard.description}</p> {/* Adjusted font size */}
+              <div className="text-5xl mb-3">{currentLetterMatchCard.image}</div>
+              <p className="text-md text-gray-600 mb-4">{currentLetterMatchCard.description}</p>
 
               {/* Big Sound Button */}
               <HapticButton
                 variant="outline"
                 onClick={() => playHebrewSound(currentLetterMatchCard.hebrew)}
-                className="w-16 h-16 rounded-full mx-auto" // Slightly smaller button
+                className="w-16 h-16 rounded-full mx-auto"
                 hapticType="light"
               >
                 <Volume2 className="w-8 h-8" />
               </HapticButton>
             </Card>
 
-            <div className="grid grid-cols-3 gap-3 mb-6"> {/* Adjusted gap */}
-              {letterMatchOptions.map((option, index) => (
+            <div className="grid grid-cols-2 gap-3 mb-6 max-w-md mx-auto"> {/* Adjusted grid and max-width */}
+              {selectedOptions.map((option, index) => (
                 <HapticButton
                   key={index}
                   variant="outline"
                   onClick={() => handleLetterMatchAnswer(option)}
-                  className="h-20 flex items-center justify-center text-4xl font-bold" // Adjusted height and font size
+                  className="h-20 flex items-center justify-center text-4xl font-bold"
                   hapticType="light"
                   disabled={letterMatchQuestion >= alphabetCards.length}
                 >
