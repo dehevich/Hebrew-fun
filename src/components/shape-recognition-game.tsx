@@ -1,13 +1,23 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { HapticButton } from '@/components/ui/haptic-button';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Volume2, CheckCircle, XCircle } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ArrowLeft, Volume2, CheckCircle, XCircle, Star } from 'lucide-react'; // Import Star icon
+import { HapticButton } from '@/components/ui/haptic-button'; // Ensure HapticButton is imported
+
+type Message = {
+  text: string;
+  senderId: string;
+  timestamp: string;
+}
 
 interface ShapeRecognitionGameProps {
   level: number;
   question: number;
+  points: number; // Added points prop
   onBack: () => void;
   onCorrect: () => void;
 }
@@ -97,7 +107,7 @@ const shapes: Shape[] = [
   }
 ];
 
-export default function ShapeRecognitionGame({ level, question, onBack, onCorrect }: ShapeRecognitionGameProps) {
+export default function ShapeRecognitionGame({ level, question, points, onBack, onCorrect }: ShapeRecognitionGameProps) {
   const [selectedShape, setSelectedShape] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState<{type: 'good' | 'bad', message: string} | null>(null);
   const [currentShapes, setCurrentShapes] = useState<Shape[]>([]);
@@ -150,39 +160,42 @@ export default function ShapeRecognitionGame({ level, question, onBack, onCorrec
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 safe-area-inset">
-      <div className="max-w-4xl mx-auto safe-area-all">
+      <div className="max-w-2xl mx-auto safe-area-all">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 safe-area-top">
           <HapticButton
             variant="outline"
             onClick={onBack}
-            className="p-3 touch-target"
+            className="p-2" // Adjusted padding
             hapticType="light"
           >
             <ArrowLeft className="w-5 h-5" />
           </HapticButton>
-          <div className="text-center">
+          <div className="text-center flex-1"> {/* Added flex-1 to center title */}
             <h1 className="text-2xl font-bold text-gray-800">Shape Recognition</h1>
             <p className="text-gray-600">Level {level} • Question {question + 1}/8</p>
           </div>
-          <div className="w-12" />
+          <div className="flex items-center gap-2"> {/* Star counter */}
+            <Star className="w-5 h-5 text-yellow-500" />
+            <span className="text-lg font-bold text-gray-800">{points}</span>
+          </div>
         </div>
 
         {/* Question */}
-        <Card className="mb-8 p-8 text-center">
-          <div className="text-6xl mb-4">{correctShape.emoji}</div>
-          <div className="text-2xl font-bold text-purple-600 mb-2">{correctShape.hebrew}</div>
-          <div className="text-lg text-gray-600 mb-4">{correctShape.english}</div>
+        <Card className="mb-6 p-6 text-center"> {/* Reduced padding */}
+          <div className="text-5xl mb-3">{correctShape.emoji}</div> {/* Adjusted font size */}
+          <div className="text-xl font-bold text-purple-600 mb-2">{correctShape.hebrew}</div> {/* Adjusted font size */}
+          <div className="text-md text-gray-600 mb-4">{correctShape.english}</div> {/* Adjusted font size */}
           <div className="text-sm text-gray-500 mb-6">{correctShape.description}</div>
           
           {/* Sound Button */}
           <HapticButton
             variant="outline"
             onClick={() => playHebrewSound(correctShape.hebrew)}
-            className="w-20 h-20 rounded-full mx-auto touch-target"
+            className="w-16 h-16 rounded-full mx-auto" // Slightly smaller button
             hapticType="light"
           >
-            <Volume2 className="w-10 h-10" />
+            <Volume2 className="w-8 h-8" />
           </HapticButton>
         </Card>
 
@@ -199,13 +212,13 @@ export default function ShapeRecognitionGame({ level, question, onBack, onCorrec
         )}
 
         {/* Shape Options */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-3 mb-8"> {/* Adjusted gap */}
           {currentShapes.map((shape) => (
             <HapticButton
               key={shape.id}
               variant={selectedShape === shape.id ? "default" : "outline"}
               onClick={() => handleShapeSelect(shape.id)}
-              className={`h-32 flex flex-col items-center justify-center touch-target transition-all duration-200 ${
+              className={`h-28 flex flex-col items-center justify-center touch-target transition-all duration-200 ${ // Adjusted height
                 selectedShape === shape.id 
                   ? shape.id === correctShape.id 
                     ? 'bg-green-500 hover:bg-green-600 text-white border-green-600' 
